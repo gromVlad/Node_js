@@ -23,4 +23,4 @@ function fib(n) {
     });
 }
 
-fib(100000).then((res) => console.log(res));
+fib(40).then((res) => console.log(res));

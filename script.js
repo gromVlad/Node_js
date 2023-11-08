@@ -25,7 +25,7 @@
 //___hello node.js____
 
 //run code -> node name_file
-console.log('hello');//hello
+console.log("hello"); //hello
 
 //node -> запуск итерактивного инерпритатора. выход -> .exit
 
@@ -39,12 +39,12 @@ console.log('hello');//hello
 //____Краткий курс по JS___
 
 //__переменные
-let a = 20
-a = 20
-let b = 10
-b = false
+let a = 20;
+a = 20;
+let b = 10;
+b = false;
 
-//PascalCase 
+//PascalCase
 //DB_PASSWORD
 //camelCase
 
@@ -54,58 +54,58 @@ b = false
 //лучше всегда объявлять переменные с помощью const
 
 //__соединения строк
-const hello = 'hello'
-const world = 'world'
-let res = `${hello} ${world}`//hello world
+const hello = "hello";
+const world = "world";
+let res = `${hello} ${world}`; //hello world
 
 //__объекты - ссылочный тип
 const obj = {
-  popular: '24',
-  country: 'minsk',
+  popular: "24",
+  country: "minsk",
   getCountry() {
-    return this.country
-  }
-}
-obj.getCountry()
-console.log();//тоже объект с методам log()
+    return this.country;
+  },
+};
+obj.getCountry();
+console.log(); //тоже объект с методам log()
 
 //__функции
 function name() {
-  console.log('hello');
+  console.log("hello");
 }
-name()
+name();
 
 const arrFun = () => {
-  console.log('hello');
-}
+  console.log("hello");
+};
 
 const personOne = {
-  name: 'bob',
-  age: 29
-}
+  name: "bob",
+  age: 29,
+};
 
 function incrPerson(person) {
-  person.age += 1
-  return person
+  person.age += 1;
+  return person;
 }
-incrPerson(personOne)
-console.log(personOne.age);//22
+incrPerson(personOne);
+console.log(personOne.age); //22
 
 //колбэк функция
 function printMyName() {
-  console.log('vlad');
+  console.log("vlad");
 }
 setTimeout(() => {
-  printMyName()
+  printMyName();
 }, 1000);
 
 //__массивы
 //упорядочные значения
-const myArr = [1, 2, 3]
-console.log(myArr);//[1,2,3]
-console.log(myArr.length);//3
-myArr[2] = 12
-console.log(myArr);//[ 1, 2, 12 ]
+const myArr = [1, 2, 3];
+console.log(myArr); //[1,2,3]
+console.log(myArr.length); //3
+myArr[2] = 12;
+console.log(myArr); //[ 1, 2, 12 ]
 //pop() push() shift() unshift() map()...
 
 //__операторы
@@ -118,70 +118,72 @@ console.log(myArr);//[ 1, 2, 12 ]
 //__деструктаризация
 const userProf = {
   name: "vlad",
-  age: 24
-}
-const { name, age } = userProf
-const fruits = ['apple', 'banana']
-const [frOne, frTwo] = fruits
+  age: 24,
+};
+const { name, age } = userProf;
+const fruits = ["apple", "banana"];
+const [frOne, frTwo] = fruits;
 
 //__тернарный оператор
-let value = 11
-console.log(value >= 0 ? value : - value);//11
+let value = 11;
+console.log(value >= 0 ? value : -value); //11
 
 //__классы
 class Comments {
   constructor(text) {
-    this.text = text
-    this.votes = 0
+    this.text = text;
+    this.votes = 0;
   }
 
   upvote() {
-    this.votes += 1
+    this.votes += 1;
   }
 }
 
 //расширяем класс
 class Extends extends Comments {
   info() {
-    console.log('any info');
+    console.log("any info");
   }
 }
-const newComments = new Comments('hello')
-newComments.upvote()
-newComments.info()
+const newComments = new Comments("hello");
+newComments.upvote();
+newComments.info();
 
 //___promise
 //отложенные действие,обещание получить результат в будущем
 const myPromise = new Promise((res, rej) => {
-  return res(1)
-})
+  return res(1);
+});
 
-myPromise.then(res => console.log(res)).catch(err => console.error(err))
+myPromise.then((res) => console.log(res)).catch((err) => console.error(err));
 
 //fetch api
-fetch('').then(res => console.log(res)).catch(err => console.error(err))
+fetch("")
+  .then((res) => console.log(res))
+  .catch((err) => console.error(err));
 
 //async await
 async function fetchData(url) {
   try {
-    const res = await fetch(url)
-    return res.json()
+    const res = await fetch(url);
+    return res.json();
   } catch (error) {
     console.error(error);
   }
 }
-const url = "https://hdrezka.co/"
-fetchData(url).then(res = console.log(res))
+const url = "https://hdrezka.co/";
+fetchData(url).then((res = console.log(res)));
 
 //____json
 //формат обмена и хранения данный, все ключи это строки
-JSON.parse() //конвертация в js
-JSON.stringify() // конвертация в json
+JSON.parse(); //конвертация в js
+JSON.stringify(); // конвертация в json
 
 //------------------------
 //____Как работает Node.js___
 
-//однопоточный , благодоря асинхронным неблокирующим операциям он может обрабатывать несколько потоков. 
+//однопоточный , благодоря асинхронным неблокирующим операциям он может обрабатывать несколько потоков.
 
 //Пример блокирующей операций
 //HTTP запрос -> сервер (поток) -> запрос на чтение -> база данных (пока сервер ожидает ответ от базы данных код далее не выполняеться)
@@ -192,22 +194,22 @@ JSON.stringify() // конвертация в json
 
 //Пример блокирущей операции
 //fs  -модуль для работы с файлами
-const fs = require('fs')
+const fs = require("fs");
 //readFileSyn - синхронно читаем данные в блокирующем формате
-const data = fs.readFileSync('./test.txt', 'utf-8')//пока мы читаем данные в этой строке код далее не выполняеться
+const data = fs.readFileSync("./test.txt", "utf-8"); //пока мы читаем данные в этой строке код далее не выполняеться
 //после окончание чтения файла
-console.log('file readind');
-console.log('continue...');
+console.log("file readind");
+console.log("continue...");
 
 //Пример неблокирущей операции
-const fs = require('fs')
-fs.readFile('./test.txt', 'utf-8', (err, data) => {
+const fs = require("fs");
+fs.readFile("./test.txt", "utf-8", (err, data) => {
   if (!err) {
-    console.log('file readind');
+    console.log("file readind");
   }
-})
+});
 //выполниться до окончание чтение файла
-console.log('continue...');
+console.log("continue...");
 
 //--------------------
 //__Libuv с циклом событий и пулом потоков__
@@ -229,8 +231,8 @@ console.log('continue...');
 //В этих потоках выполняються задачи операции ввода вывода, задачи создающие нагрузку на процессор
 //Libuv использует операционную систему для выполнения задач, делегирование задач OS, если можно делегировать то она выполняеться OS, если нет то задача идет в Thread pool
 
-//Например 
-//Thread pool -> база данных, сеть, файловая система, после завершения операций поподает в Event QUEUE 
+//Например
+//Thread pool -> база данных, сеть, файловая система, после завершения операций поподает в Event QUEUE
 //Event QUEUE -очередь событий, туда попадают события после завершения определенной операций, типо ответа от базы данных,ответ по сети с удаленного сервера и далее эти события поподают в Event Loop и выполняються в зависемости от их очереди
 
 //-----------------------
@@ -249,8 +251,8 @@ console.log('continue...');
 //Вызывает на текущей или следующей итерации цикла событий
 // приоритет ниже чем nextTick
 setImmediate(() => {
-  console.log('immediate');
-})
+  console.log("immediate");
+});
 
 //------------------
 //__Блокирующие операции___
@@ -261,42 +263,42 @@ setImmediate(() => {
 //------------------
 //___Практика - Цикл событий___
 //сначало идет код -> console.log()
-//далее Next tick 
+//далее Next tick
 //Promises
-//Timers 
+//Timers
 //I/O Events
 //setimmediate
-//close 
+//close
 
 //модули по id
-const fs = require('fs');
-const dns = require('dns');
+const fs = require("fs");
+const dns = require("dns");
 
 //performance.now() метод который показывает время выполнения в мс
 function info(text) {
   console.log(text, performance.now().toFixed(2));
 }
-console.log('Program start');
+console.log("Program start");
 
 // Close events
 //асинхронная запись в файл
 //файл, данные, опции?, колбэк событие
-fs.writeFile('./test.txt', 'Hello Node.js', () => info('File written'));
+fs.writeFile("./test.txt", "Hello Node.js", () => info("File written"));
 
 // Promises
-Promise.resolve().then(() => info('Promise 1'));
+Promise.resolve().then(() => info("Promise 1"));
 
 // Next tick
-process.nextTick(() => info('Next tick 1'));
+process.nextTick(() => info("Next tick 1"));
 
 // setImmediate (Check)
-setImmediate(() => info('Immediate 1'));
+setImmediate(() => info("Immediate 1"));
 
 // Timeouts
-setTimeout(() => info('Timeout 1'), 0);
+setTimeout(() => info("Timeout 1"), 0);
 setTimeout(() => {
-  process.nextTick(() => info('Next tick 2'));
-  info('Timeout 2');
+  process.nextTick(() => info("Next tick 2"));
+  info("Timeout 2");
 }, 100);
 
 // Intervals
@@ -308,12 +310,12 @@ const intervalId = setInterval(() => {
 
 // I/O Events
 //lookup - dns запрос, имя, (ошибка, адрес который вернет сервер,)
-dns.lookup('localhost', (err, address, family) => {
-  info('DNS 1 localhost');
-  Promise.resolve().then(() => info('Promise 2'));
-  process.nextTick(() => info('Next tick 3'));
+dns.lookup("localhost", (err, address, family) => {
+  info("DNS 1 localhost");
+  Promise.resolve().then(() => info("Promise 2"));
+  process.nextTick(() => info("Next tick 3"));
 });
-console.log('Program end');
+console.log("Program end");
 /* Program start
 Program end
 Next tick 1  115.25
@@ -330,8 +332,188 @@ Next tick 2  205.42
 Interval 2  206.79 */
 
 //--------------------
-//__
+//__Блокирование цикла событий____
+let isRunning = true;
 
+//до вызова этой функции мы не доходим
+//2 итэрация цикла мы до ее не доходим
+setTimeout(() => (isRunning = false), 0);
 
+//не доходит до нее
+process.nextTick(() => console.log("Next tick"));
 
+//1 итэрация цикла
+while (isRunning) {
+  console.log("While loop is running...");
+}
+//While loop is running... - бесконечно
 
+//----------------------
+//___Цикл while без блокирования___
+const fs = require("fs");
+let isRunning = true;
+
+setTimeout(() => (isRunning = false), 100);
+process.nextTick(() => console.log("Next tick"));
+
+function setImmediatePromise() {
+  return new Promise((resolve, reject) => {
+    //setImmediate() разрывает цикл событий чтобы мы перешли к другой итерации
+    setImmediate(() => resolve());
+
+    // если бы ло бы resolve просто то мы бы находились на одной итерации что и nextTick и поэтому также whileLoop был бы бесконечным
+    // resolve()
+  });
+}
+
+//сделали цикл не неприрывным а он ожидает результат определенного Promise
+async function whileLoop() {
+  while (isRunning) {
+    console.log("While loop is running...");
+    await setImmediatePromise();
+  }
+}
+
+whileLoop().then(() => console.log("While loop ended"));
+// While loop is running...
+// Next tick
+// While loop is running...
+// While loop is running...
+// ....
+// While loop ended
+
+//--------------------
+//___Стек вызовов (call stack)___
+//Цикл событйи ожидает пока код не завершиться
+function thirdFun() {
+  return 10;
+}
+
+function secondFun() {
+  return thirdFun();
+}
+
+function firstFun() {
+  return secondFun();
+}
+console.log(firstFun()); //10
+//call stack
+//thirdFun()
+//secondFun()
+//firstFun()
+//10
+
+//-------------------
+//___Блокирование цикла событий в рекурсивной функции___
+// 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55
+
+setTimeout(() => console.log("Timeout"), 0);
+
+//это функция синхронна и поэтому мы блокируем цикл пока не выполним ее
+function fib(n) {
+  if (n === 0 || n === 1) {
+    return n;
+  }
+  return fib(n - 1) + fib(n - 2);
+}
+
+console.log(fib(40));
+// 102334155
+// Timeout
+
+//------------------------------
+//___ Функция fib без блокирования цикла событий__
+// 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55
+
+setTimeout(() => console.log("Timeout"), 0);
+
+function fib(n) {
+  return new Promise((resolve, reject) => {
+    if (n === 0 || n === 1) {
+      return resolve(n);
+    }
+    setImmediate(() =>
+      Promise.all([fib(n - 1), fib(n - 2)]).then(([fib1, fib2]) =>
+        resolve(fib1 + fib2)
+      )
+    );
+  });
+}
+// Heap out of memory
+fib(40).then((res) => console.log(res));
+// Timeout
+// 55
+//если больше 40 то ошибка Heap out of memory  вышли за рамки памяти которые выделяються под программу
+
+//----------------------------
+//___Оптимизация функции fib_____
+// 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55
+
+setTimeout(() => console.log("Timeout"), 0);
+
+//храним в кэшэ
+const cache = new Map();
+
+function fib(n) {
+  return new Promise((resolve, reject) => {
+    if (n === 0 || n === 1) {
+      return resolve(n);
+    }
+    if (cache.has(n)) {
+      return resolve(cache.get(n));
+    }
+
+    //setImmediat неблокирует цикл событий
+    setImmediate(() =>
+      fib(n - 1).then((fib1) =>
+        fib(n - 2).then((fib2) => {
+          cache.set(n, fib1 + fib2);
+          resolve(fib1 + fib2);
+        })
+      )
+    );
+  });
+}
+
+fib(100000).then((res) => console.log(res));
+// Timeout
+// 102334155
+
+//-------------------------
+//__Поиск числа фибоначи без рекурсии___
+// 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55
+//код написан асинхронно но т.к. он хорошо оптимизирован он может работать на невысоко нагруженном приложений
+
+function info(text) {
+  console.log(text, performance.now().toFixed(2));
+}
+
+info("Program start");
+
+setTimeout(() => info("Timeout"), 0);
+
+function fib(n) {
+  if (n === 0 || n === 1) {
+    return n;
+  }
+  let fib1 = 0;
+  let fib2 = 1;
+  let sum;
+  for (let i = 1; i < n; i++) {
+    sum = fib1 + fib2;
+    fib1 = fib2;
+    fib2 = sum;
+  }
+  return sum;
+}
+
+console.log(fib(100000));
+
+info("Program end");
+
+// Program start 86.43
+// 4.346655768693743e+208
+// Program end 100.63
+// Timeout 105.20
+
+//--------------------------

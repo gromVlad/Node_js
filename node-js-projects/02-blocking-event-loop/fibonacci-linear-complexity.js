@@ -22,6 +22,6 @@ function fib(n) {
     return sum;
 }
 
-console.log(fib(100000));
+console.log(fib(1000));
 
 info('Program end');
