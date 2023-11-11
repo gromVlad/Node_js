@@ -517,3 +517,220 @@ info("Program end");
 // Timeout 105.20
 
 //--------------------------
+//_______Модули______
+//в node каждый файл являеться модулем
+//Преимущества 
+//- разделение на части
+//- организация кода
+//- разделения ответствености
+//- упрощение поддержки приложения
+
+//Характеристика модулей
+//По умолчанию ни одна из переменных в модуле не доступна для импорта в других модулях
+//Чтобы переменная стала доступна для импорта в других модулях ее необходимо эспортировать из модуля
+//Для использование в опреедленном модуле переменные из других модулей их необходимо импортировать
+//При импортировании переменных из других модулей их можно изменять
+
+//Варианты модулей
+//commonJS Modules require... (по умолчанию)
+//ECMAScript Modules (ESM) import...
+
+//---------------------
+//_commonJS Modules
+//по умолчанию
+module.exports // объект для экспортирования из модуля
+require() //что хотим импротировать
+
+//По умолчанию любой файл node явл. модулем commonJS
+// module объект который доступен в любом таком файле
+//module.exports содержит значения из модуля
+//module.exports по умолчанию пустой объект
+//переменная export - это копия module exports
+
+//---------------------
+//_Как устроен модуль commonJS
+//каждый модуль автоматический оборачиваеться в анонимную функцию
+//(function (export,require,module,_filename,_dirname){}) из которой мы и имеем доступ к module и т.д.
+
+//проверка наличия анонимной функции
+console.log(arguments.callee.toString());//(function (export,require,module,_filename,_dirname){})
+//_filename - абсолютный путь
+//module - объект (id,path,children...)
+//_dirname - путь к папке
+//export - пустой {} аналог module.export
+//require - функия для импорта (можно опускать расширения если .js .json .node)
+
+//--------------------
+//_Экспорт из модуля
+function printHello() {
+  console.log('helloWorld');
+}
+//добовляем ключ со значением в объекте
+module.exports.printHello = printHello
+
+//the same
+//лучше так не делать
+module.exports.printHello = function () {
+  console.log('helloWorld');
+}
+
+//переписываем значения module.exports
+//можно так эспортировать да же одну функцию
+module.exports = function () {
+  console.log('helloWorld');
+}
+
+//aлиас module.exports
+//exports то же самое как и module.exports (просто aлиас (ссылка))
+
+//так нельзя эспортировать exports т.к она уже не будет ссылаться на тот же объект (то есть на module.export)
+exports = function () {
+  console.log('hello World');
+}
+
+//!Правило если эспортируем одно что-то то применяем module.exports 
+
+//-------------------------
+//_Функция require
+//доступна везде по умолчанию
+//для импорта переменных
+//можноможно импортировать из встроенныйх или внешних модулей указывая имя модуля
+//можно импортировать из модулей приложения, указывать путь к соответвующим файлам
+
+//указываем имя встроенного или внешнего модуля
+const fs = require('fs')
+
+//импорт единтсвенного эспорта
+//users.js
+const users = [1, 2.3]
+module.exports = users
+//index.js
+//если эспортируем один файл можно название писать любое
+const usersArr = require('./users.js')
+
+//--------------------------
+//_Импорт нескольких переменных
+
+//users.js
+const URL = 'http...'
+const USERNAME = 'admin'
+const PASSWORD = 'strong_pass'
+
+module.exports.URL = URL
+module.exports.USERNAME = USERNAME
+module.exports.PASSWORD = PASSWORD
+
+//index.js
+const { URL, USERNAME, PASSWORD } = require('./users.js')
+
+//импорт функции
+//utils,js
+async function getData(url) {
+  const res = await fetch(url)
+  const data = await res.json()
+  return data
+}
+module.exports = getData
+
+//index.js
+const getFun = require('./users.js')
+getFun('http...').then((res) => console.log(res)).catch((err) => console.error(err))
+
+//------------------------
+//_module.exports практика
+
+//multiple-exports.js
+const myName = 'Bogdan';
+const myHobbies = ['swimming', 'boxing', 'cycling'];
+const myFavoriteNumber = 77;
+
+console.log('Text from the multiple-exports CommonJS module');
+
+module.exports.myName = myName;
+exports.myHobbies = myHobbies;
+exports.myFavoriteNumber = myFavoriteNumber;
+
+//single -export.js
+function greeting(name) {
+  console.log('Hello', name);
+}
+
+// console.log(__filename);
+
+module.exports = greeting;
+
+// // DON'T DO THIS!
+// exports = greeting;
+
+//export-and-import.js
+const { myName, myHobbies } = require('./multiple-exports');
+
+const myFriendsName = 'Alice';
+
+module.exports.myName = myName;
+module.exports.myFriendsName = myFriendsName;
+// property names could be different from the variable names
+module.exports.myGreatHobbies = myHobbies;
+
+//index.js
+const { myName, myHobbies, myFavoriteNumber } = require('./multiple-exports');
+
+//переменовываем название перменной myOtherName
+const {
+  myName: myOtherName,
+  myFriendsName,
+  myGreatHobbies,
+} = require('./export-and-import');
+
+const greetingFn = require('./my-modules/single-export');
+// // DON'T USE ABSOLUTE PATHS
+// const greetingFn = require('/Users/bogdan/Desktop/node/03-commonjs-modules/single-export.js');
+
+// Imports from multiple-exports
+console.log(myName);
+console.log(myHobbies);
+console.log(myFavoriteNumber);
+
+// mutates array in the multiple-exports module!
+myHobbies.push('climbing');
+
+console.log(greetingFn);
+greetingFn(myName);
+
+console.log(myOtherName);
+console.log(myFriendsName);
+console.log(myGreatHobbies);
+/* 
+Text from the multiple-exports CommonJS module
+Bogdan
+[ 'swimming', 'boxing', 'cycling' ]
+77
+[Function: greeting]
+Hello Bogdan
+Bogdan
+Alice
+[ 'swimming', 'boxing', 'cycling', 'climbing' ] 
+*/
+
+//-------------------
+//_Модули ES6
+//export 
+//import
+
+//переход c commonJS на ES6
+//изменить расширения файлов на mjs
+//добавить "type":'module' в файле paskage.json
+
+//Внутри модуля ES6 нет доступа к перменным module и т.д.
+
+//---------------------------
+//_Типы эспортов
+//-именованные
+//-экспорт по умолчанию
+//-смешанные экспорты
+
+//-------------------------
+//
+
+
+

@@ -24,3 +24,6 @@ greetingFn(myName);
 console.log(myOtherName);
 console.log(myFriendsName);
 console.log(myGreatHobbies);
+
+
+
