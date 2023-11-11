@@ -535,6 +535,8 @@ info("Program end");
 //commonJS Modules require... (по умолчанию)
 //ECMAScript Modules (ESM) import...
 
+//Модули кэшыруеться в памяти для улучшения производительности приложения
+
 //---------------------
 //_commonJS Modules
 //по умолчанию
@@ -730,7 +732,195 @@ Alice
 //-смешанные экспорты
 
 //-------------------------
-//
+//_Именованный экспорт
+
+function prh (){
+  console.log('hello');
+}
+export { prh }//будет доступна в других модулях
+
+//в начале файла
+//указываем относительные а не абсолютные пути
+import { prh } from "./hello.mjs";
+
+//несколько переменных
+function pr1() {
+  console.log('hello');
+}
+
+function pr2() {
+  console.log('hello');
+}
+export { pr1,pr2 }//будет доступна в других модулях
+
+// это не объект а синтаксис ES6
+import { pr1, pr2 } from "./hello.mjs";
+
+//users.js
+const URL = 'http...'
+const USERNAME = 'admin'
+const PASSWORD = 'strong_pass'
+
+export { URL, USERNAME, PASSWORD }
+
+//index.js
+import { URL, USERNAME, PASSWORD } from "./hello.mjs";
+
+//можно указывать экспорт непосредственно перед переменной
+export function pr3() {
+  console.log('hello');
+}
+
+//---------------------
+//_Экспорт по умолчанию
+
+function prh() {
+  console.log('hello');
+}
+export default prh
+
+//без скобок , название переменной может быть любым
+import prFun from './hello.mjs'
+
+//----------------
+//_Опции импортов
+//если импортируем много перемнных можно разбивать на разные строки, название должны совподать
+//выборочный импорт переменных
+//можно переменовывать переменные при импорте с помощью import {print as greet} from './...'
+//можем выполнять из встроенных и внешних модулей  import fs from 'fs'; 
+//также можно комбинировать и импортировать по умолчани и именованные экспорты 
+//при импортировании встроенных модулей можно добовлять префикс node - import fs from 'node:fs'; (const fs = require('node:fs'))
+
+//--------------
+//_Практика ES6 модулей
+
+//mixed-exports.mjs
+const USERNAME = 'admin';
+const PASSWORD = 'strong-password';
+const DEFAULT_SERVER = 'http://localhost';
+
+export default DEFAULT_SERVER;
+
+export { USERNAME, PASSWORD };
+
+//default-export.mjs
+async function getData(url) {
+  const res = await fetch(url);
+  const posts = await res.json();
+  return posts;
+}
+
+export default getData;
+
+//inline-exports.mjs
+export const humidity = 40;
+export const isRaining = false;
+
+//mixed-exports.mjs
+const USERNAME = 'admin';
+const PASSWORD = 'strong-password';
+const DEFAULT_SERVER = 'http://localhost';
+
+export default DEFAULT_SERVER;
+
+export { USERNAME, PASSWORD };
+
+//named-exports.mjs
+const season = 'spring';
+const temperature = 13;
+
+export { season, temperature };
+
+//index.mjs
+import { season, temperature } from './named-exports.mjs';
+import { isRaining, humidity } from './inline-exports.mjs';
+import getDataFromServer from './default-export.mjs';
+import DEFAULT_SERVER, {
+  USERNAME as MY_USERNAME,
+  PASSWORD as MY_PASSWORD,
+} from './mixed-exports.mjs';
+
+console.log(season);
+console.log(temperature);
+
+console.log(isRaining);
+console.log(humidity);
+
+getDataFromServer('https://jsonplaceholder.typicode.com/posts/1')
+  .then((post) => console.log(post))
+  .catch((err) => console.error(err));
+
+console.log(DEFAULT_SERVER);
+console.log(MY_USERNAME, MY_PASSWORD);
+/* spring
+13
+false
+40
+http://localhost
+admin strong-password
+{
+  userId: 1,
+  id: 1,
+  title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
+  body: 'quia et suscipit\n' +
+    'suscipit recusandae consequuntur expedita et cum\n' +
+    'reprehenderit molestiae ut ut quas totam\n' +
+    'nostrum rerum est autem sunt rem eveniet architecto'
+} */
+
+//------------------------------------
+//____Встроенные модули в Node.js______
+//fs events path http stream
+//использовать официальную документацию
+
+//---------------------
+//_Модуль fs
+//Синхронные и асинхроные функции взаимодействием с файлами
+//Стили использование модуля
+//-Callback API
+//-Promise API
+//-Synchronous API
+
+//функции в модуле которые работают синхронна добовляеться _sync (readFileSync) асинхронные функции async (readFile)
+
+//вариант с асинхронными функциями
+const fs = require('fs')
+fs.readFile('./file.txt','utf-8',(err,data) => {
+  if (err){
+    console.log(err);
+  } else {
+    console.log(data);
+  }
+})
+
+//вариант с промисами
+const fs = require('fs/promise')
+fs.readFile('./file.txt', 'utf-8').then((data) => console.log(data)).catch((err) => console.error(err))
+
+//синхронная
+const fs = require('fs')
+try {
+  const data = fs.readFileSync('./file.txt', 'utf-8')
+  console.log(data);
+} catch (error) {
+  console.log(error);
+}
+
+//----------------------
+//_Запись в файл с помощью модуля fs
+
+//асинхронная 
+const fs = require('fs')
+
+const dataToWrite = 'hello Node'
+fs.writeFile('./file.txt',dataToWrite,(err) => {
+  if (err){
+    console.log(err);
+  }
+})
+
+// promise и асинхроные функции также по примеру выше -//---//---
+
 
 
 
