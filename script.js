@@ -1429,3 +1429,126 @@ module.exports = {
   handleNotFound,
   getHome,
 };
+
+//------------------------
+//____Moдуль stream___
+// Потоки
+//- потоки позволяет нам обрабатывать данные частями
+//- потоки идеальные для работы с большими объемами данных, которое могут не поместиться а памяти одновременно
+//- Можно прочитать файл частями что позволяет избежать чтения всего файла и записи его в памяти
+//- потоки являються экземплярами класса EventEmitter
+
+//без потоков если у нас есть источник данных то нам необходимо загрузить ввсе перед началом обработки
+//с потоками разбиваем данные на части и по очереди из загружаем по мере их загрузки не перезагружая память
+
+//Типы потока
+//Readable - для чтения
+//Writable - для записи
+//Duplex - как для чтения так и для записи
+// Transform - преобразует входные даннные (трансформирует в другой поток)
+
+//запись файла с помощью потока
+const fs = require('fs')
+
+const writeStream = fs.createWriteStream('./f.txt')
+writeStream.write('this is data')
+writeStream.write('write to the file using stream')
+writeStream.write('\n')
+writeStream.write('streams the great')
+writeStream.end()
+
+//чтения файла с помощью потока
+const fs = require('fs')
+
+const readStream = fs.createReadStream('./f.txt','utf8')
+readStream.on('data', (dataChunk) => {
+  console.log(dataChunk);
+})
+readStream.on('end', () => {
+  console.log('file reading complete');
+})
+readStream.on('error', (err) => {
+  console.log(err);
+})
+
+//метод pipe может перенаправлять один поток в другой поток
+readableStream.pipe(writableStream)
+
+//цепочка вызовов - позволяет возвращать целевой поток что позволяет снова вызвать метод pipe
+stream1.pipe(stream2).pipe(stream3)
+
+//-------------------------
+//_Копирование файлов с помощью потоков
+const fs = require('fs')
+
+const readStream1 = fs.createReadStream('./f.txt', 'utf8')
+const writeStream1 = fs.createWriteStream('./f_copy.txt')
+
+readStream1.pipe(writeStream1)
+
+writeStream1.on('close',() => {
+  console.log('file copy completed');
+})
+
+//--------------------------
+//_Создание transform потока
+const stream = require('stream')
+
+const upperCaseStream = new stream.Transform({
+
+  //часть данных, кодировка, объект
+  transform(chunk,encoding,callback) {
+    const upperCase = chunk.toString().toUpperCase()
+
+    //должен быть вызван с ошибкой или преобразованной частью потока вместо null вписываем ошибку если она есть
+    callback(null,upperCase)
+  }
+})
+
+//использование transform потока
+//stdin - стандартный ввод поток для чтения (когда введет данные из терминала), далее трансформируем, после выводим в терминал
+process.stdin.pipe(upperCaseStream).pipe(process.stdout)
+// в консоли пишем hello -> выводит в консоль HELLO
+
+//-----------------------
+//_Практика - Передача файла клиенту по http в потоке
+
+//index.html
+/* 
+     <body>
+        <h1>Streamed HTML file from the HTTP server</h1>
+    </body>
+*/
+
+//http-stream-file.mjs
+import http from 'http';
+import fs from 'fs';
+
+const server = http.createServer((req, res) => {
+  const filePath = './files/index.html';
+  // With streams
+  if (req.url === '/' && req.method === 'GET') {
+    const readStream = fs.createReadStream(filePath);
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'text/html');
+    readStream.pipe(res);
+  }
+  // Without streams. We read entire file and then send it to the client
+  if (req.url === '/no-stream' && req.method === 'GET') {
+    fs.readFile(filePath, (err, data) => {
+      if (err) {
+        res.statusCode = 500;
+        res.end('Error reading file on server');
+      } else {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'text/html');
+        res.end(data);
+      }
+    });
+  }
+});
+
+server.listen(5000, () => {
+  console.log('Server is listening at port 5000');
+});
+
