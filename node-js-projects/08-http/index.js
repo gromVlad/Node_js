@@ -11,6 +11,7 @@ const {
 const PORT = 5000;
 
 const server = http.createServer((req, res) => {
+  console.log(req);//объект запроса с url, methods и т.д.
     if (req.method === 'GET' && req.url === '/') {
         return getHome(req, res);
     }

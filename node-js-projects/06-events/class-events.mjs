@@ -27,11 +27,9 @@ class Post extends EventEmitter {
 }
 
 const myPost = new Post('Bogdan', 'My great post!');
-
-// console.log(myPost.author);
-// console.log(myPost.text);
-// console.log(myPost.likesQty);
 myPost.like('alice');
 setTimeout(() => myPost.like(), 1000);
-setTimeout(() => myPost.like('alex'), 2000);
-// console.log(myPost.likesQty);
+setTimeout(() => myPost.like('alex'), 2000);;
+//alice liked your post!
+//No username in the like request!
+//alex liked your post!

@@ -6,6 +6,8 @@ function getHome(req, res) {
     fs.readFile('./files/comment-form.html', (err, data) => {
         if (err) {
             res.statusCode = 500;
+
+            //тип контента
             res.setHeader('Content-Type', 'text/plain');
             res.end('Server error while loading HTML file');
         } else {

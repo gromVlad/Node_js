@@ -16,7 +16,7 @@ fileEmitter.on('appendComplete', () => {
     console.log(`Appended text to the ${filePath} file`);
     fs.rename(filePath, './renamed-first.txt', () => {
         fileEmitter.emit('renameComplete');
-    });
+    }); 
 });
 
 fileEmitter.on('renameComplete', () => {

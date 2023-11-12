@@ -921,6 +921,511 @@ fs.writeFile('./file.txt',dataToWrite,(err) => {
 
 // promise и асинхроные функции также по примеру выше -//---//---
 
+//-------------------------
+//_Удаление файлов с помощью модуля fs
+
+//асинхронная 
+const fs = require('fs')
+
+fs.unlink('./file.txt',(err) => {
+  if (err) {
+    console.log(err);
+  }
+  console.log('file deleted');
+})
+
+// promise и асинхроные функции также по примеру выше -//---//---
+
+//-----------------------------
+//_Практика модуля fs
+const fs = require('fs');
+
+fs.writeFile('./first.txt', 'First file text', (err) => {
+  if (err) console.log(err);
+  else {
+    console.log('File first.txt was written');
+    fs.appendFile('./first.txt', '\nOne more line', (err) => {
+      if (err) console.log(err);
+      else {
+        console.log('Appended text to the first.txt file');
+        fs.rename('./first.txt', './renamed-first.txt', (err) => {
+          if (err) console.log(err);
+          else console.log('File was renamed');
+        });
+      }
+    });
+  }
+});
+//'File first.txt was written'
+//'Appended text to the first.txt file'
+//'File was renamed'
+
+//оптимизируем код чтобы не было постоянная вложеность друг в друга 
+const fs = require('fs/promises');
+
+fs.writeFile('./first.txt', 'First file text')
+  .then(() => console.log('File first.txt was written'))
+  .then(() => fs.appendFile('./first.txt', '\nOne more line'))
+  .then(() => console.log('Appended text to the first.txt file'))
+  .then(() => fs.rename('./first.txt', './renamed-first.txt'))
+  .then(() => console.log('File was renamed'))
+  .catch((err) => console.log(err));
 
 
+//такой код не использовать т.к. синхронная операция
+const fs = require('fs');
+try {
+  fs.writeFileSync('./first.txt', 'First file text');
+  console.log('File first.txt was written');
+  fs.appendFileSync('./first.txt', '\nOne more line');
+  console.log('Appended text to the first.txt file');
+  fs.renameSync('./first.txt', './renamed-first.txt');
+  console.log('File was renamed');
+} catch (error) {
+  console.log(error);
+}
 
+//--------------------------
+//__Модуль events___
+//работа с событиями , создавать свои события, реагировать на них
+
+//архетиктура node  основана на событиях
+//встроенные модули например такие как fs генерирует события
+//событие создаеться когда данные были прочитаны из файла или когда был получен новый запрос http-сервером
+//в ответ на событие вызываеться колбэк функция, зарегистрированные колбэк функций
+//Для одного события может быть несколько событий
+
+//модуль events предостовляет класс eventmitter для работы с событиями в node.js,все объекты которые создают события являються экземплярами класса eventеmitter
+const EventEmitter = require('events')
+
+//cоздаем экземпляр класса
+const myEmitter = new EventEmitter()
+
+//создаем событие (слушителя события) / event listener
+myEmitter.on('customEvents',() => {
+  console.log("CustomEvents was emitted");
+})
+
+//вызываем метод
+myEmitter.emit('customEvent')
+
+//передача аргументов
+myEmitter.on('newUser', (userName) => {
+  console.log(userName);
+})
+myEmitter.emit('newUser','vlad')
+
+//---------------------
+//_Практика events
+
+//index.js
+import EventEmitter from 'events';
+
+const myEmitter = new EventEmitter();
+
+const timeoutListenerFn = (secondsQty) => {
+  console.log(`Timeout event in ${secondsQty} seconds!`);
+};
+
+//также можно добовлять с помощью addListener... а не on
+myEmitter.on('timeout', timeoutListenerFn);
+
+setTimeout(() => myEmitter.emit('timeout', 1), 1000);
+setTimeout(() => myEmitter.emit('timeout', 2), 2000);
+
+//однократная реакция события once. 2 раз не сработает
+myEmitter.once('singleEvent', () => {
+  console.log('Single event occurred');
+});
+
+setTimeout(() => myEmitter.emit('singleEvent'), 500);
+setTimeout(() => myEmitter.emit('singleEvent'), 1500);
+
+// отключаем событие указывая обязательно ее функцию
+setTimeout(() => myEmitter.off('timeout', timeoutListenerFn), 3000);
+setTimeout(() => myEmitter.emit('timeout', 4), 4000);
+
+/* 
+Single event occurred
+Timeout event in 1 seconds!
+Timeout event in 2 seconds!
+*/
+
+//------------------------
+//_Несколько слушателей для события
+
+//multiple-listeners.mjs
+import EventEmitter from 'events';
+
+const myEmitter = new EventEmitter();
+
+myEmitter.on('myEvent', () => {
+  console.log('First event listener');
+});
+
+myEmitter.on('myEvent', () => {
+  console.log('Second event listener');
+});
+
+myEmitter.on('otherEvent', () => console.log('Other event'));
+
+// по дефолту 10 / меняем на другое число
+myEmitter.setMaxListeners(25);
+
+//текущее максимальное число событий
+console.log(myEmitter.getMaxListeners());
+
+//список событий
+console.log(myEmitter.eventNames());
+
+setTimeout(() => myEmitter.emit('myEvent'), 1000);
+
+/* 
+25
+[ 'myEvent', 'otherEvent' ]
+First event listener
+Second event listener
+ */
+
+//----------------------
+//_Практика - Запись в файл с помощью EventEmitter
+
+//fs-events.mjs
+import EventEmitter from 'events';
+import fs from 'fs';
+
+const fileEmitter = new EventEmitter();
+
+const filePath = './first.txt';
+
+fileEmitter.on('writeComplete', () => {
+  console.log(`File ${filePath} was written`);
+  fs.appendFile(filePath, '\nOne more line', () => {
+    fileEmitter.emit('appendComplete');
+  });
+});
+
+fileEmitter.on('appendComplete', () => {
+  console.log(`Appended text to the ${filePath} file`);
+  fs.rename(filePath, './renamed-first.txt', () => {
+    fileEmitter.emit('renameComplete');
+  });
+});
+
+fileEmitter.on('renameComplete', () => {
+  console.log('File was renamed');
+});
+
+fs.writeFile(filePath, 'First file text', () => {
+  fileEmitter.emit('writeComplete');
+});
+
+/*
+ File ./first.txt was written
+Appended text to the ./first.txt file
+File was renamed
+ */
+
+//---------------------
+//_Практика - Расширение EventEmitter в классе
+
+//class-events.mjs
+import EventEmitter from 'events';
+
+class Post extends EventEmitter {
+  constructor(author, text) {
+    super();
+    this.author = author;
+    this.text = text;
+    this.likesQty = 0;
+    this.on('likePost', (username) => {
+      console.log(`${username} liked your post!`);
+    });
+    this.on('error', (error) => {
+      console.error(error);
+    });
+  }
+
+  like(username) {
+    if (!username) {
+      return this.emit(
+        'error', 
+        new Error('No username in the like request!')
+      );
+    }
+    this.likesQty += 1;
+    this.emit('likePost', username);
+  }
+}
+
+const myPost = new Post('Bogdan', 'My great post!');
+myPost.like('alice');
+setTimeout(() => myPost.like(), 1000);
+setTimeout(() => myPost.like('alex'), 2000);;
+//alice liked your post!
+//No username in the like request!
+//alex liked your post!
+
+//-----------------------
+//___Модуль path___
+//позволяет работать с путями и папками
+const path = require('path')
+
+const linux = path.join('/user','node','app.js')// /usr/node/index.js
+const winP = path.join('D:\\', 'node', 'app/js')// D:\node\index.js
+
+//расчет абсолютного пути
+const result = path.resolve('node','index.js')
+// users/desktop/node/node/index.js - добавили node/index.js
+
+//----------------------
+//_Практика - Встроенный модуль path
+const path = require('path');
+
+const filePath = '/Users/bogdan/Desktop/node/index.js';
+const textFilePath = '/Users/bogdan/Desktop/file.txt';
+const relativePath = './node/movie.mov';
+const directoryPath = './node/subfolder';
+
+//абсолютный путь
+console.log(path.isAbsolute(filePath)); // true
+console.log(path.isAbsolute(relativePath)); // false
+
+//вернет последнию часть пути
+console.log(path.basename(filePath)); // index.js
+console.log(path.basename(directoryPath)); // subfolder
+
+//путь без названия файла
+console.log(path.dirname(filePath)); // /Users/bogdan/Desktop/node
+console.log(path.dirname(directoryPath)); // ./node
+
+//получить абсолютный путь
+console.log(path.resolve(relativePath)); // /Users/bogdan/Desktop/node/07-path/node/movie.mov
+
+//получить расширения файла
+console.log(path.extname(textFilePath)); // .txt
+console.log(path.extname(relativePath)); // .mov
+console.log(path.extname(directoryPath)); // ''
+
+//распарсить путь в объект 
+console.log(path.parse(filePath));
+/* 
+  root: '/',
+  dir: '/Users/bogdan/Desktop/node',
+  base: 'index.js',
+  ext: '.js',
+  name: 'index'
+}
+ */
+
+const parsedPath = path.parse(filePath);
+console.log(filePath);
+console.log(path.join(parsedPath.dir, `renamed-${parsedPath.name}.mjs`));
+// /Users/bogdan/Desktop/node/renamed-index.mjs
+
+//------------------------
+//___Moдуль http___
+//позволяет создать сервер или отсылать запросы
+
+const http = require('http')
+
+//req - запрос ,res - ответ от сервера
+//на любой запрос будем отсылать один и от же ответ
+const server = http.createServer((req,res)=>{
+  res.statusCode = 200
+  res.setHeader('Content-Type','text/html')
+  res.write('<h1>Hello</h1>')
+  res.end()
+})
+//порт на ктором будет запущен сервер, бесконечно будет ожидать ответа от клиента
+server.listen(3000)
+
+//отправка запроса
+const url = 'http...'
+
+//асинхронный код
+http.get(url, (res) => {
+  let responseBody = ''
+
+  //регистрируем слушателей / по частям записываем данные если data событие большое
+  res.on('data', (chunk) => {
+    responseBody += chunk
+  })
+
+  //как только все данные получены выполняем определенные действия
+  res.on('end', ()=>{
+    console.log(responseBody);
+  })
+})
+
+//--------------------------
+//_Практика
+
+//comment-form.html
+/* 
+<body>
+        <h1>Add a new comment</h1>
+        <form action="/comments" method="post">
+            <label for="id">Comment ID:</label>
+            <input type="number" name="id" id="id" />
+
+            <label for="author">Author:</label>
+            <input type="text" name="author" id="author" />
+
+            <label for="text">Text:</label>
+            <textarea name="text" id="text" cols="30" rows="10"></textarea>
+
+            <button type="submit">Submit Comment</button>
+        </for
+*/
+
+//index.js
+const http = require('http');
+const {
+  getHTML,
+  getText,
+  getComments,
+  handleNotFound,
+  postComment,
+  getHome,
+} = require('./handlers');
+
+const PORT = 5000;
+
+const server = http.createServer((req, res) => {
+  console.log(req);//объект запроса с url, methods и т.д.
+  if (req.method === 'GET' && req.url === '/') {
+    return getHome(req, res);
+  }
+  if (req.method === 'GET' && req.url === '/html') {
+    return getHTML(req, res);
+  }
+  if (req.method === 'GET' && req.url === '/text') {
+    return getText(req, res);
+  }
+  if (req.method === 'GET' && req.url === '/comments') {
+    return getComments(req, res);
+  }
+  if (req.method === 'POST' && req.url === '/comments') {
+    return postComment(req, res);
+  }
+
+  handleNotFound(req, res);
+});
+
+server.listen(PORT, () => {
+  console.log(`Server was launched on port ${PORT}`);
+});
+
+//data.js
+const comments = [
+  { id: 100, text: 'First comment', author: 'Bogdan' },
+  { id: 526, text: 'Second comment', author: 'Alice' },
+  { id: 724, text: 'Last comment', author: 'Bob' },
+];
+
+module.exports = comments;
+
+//handlers.js
+const fs = require('fs');
+const qs = require('querystring');
+const comments = require('./data');
+
+//получаем html страницу
+function getHome(req, res) {
+  fs.readFile('./files/comment-form.html', (err, data) => {
+    if (err) {
+      res.statusCode = 500;
+      res.setHeader('Content-Type', 'text/plain');
+      res.end('Server error while loading HTML file');
+    } else {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'text/html');
+      res.end(data);
+    }
+  });
+}
+
+function getHTML(req, res) {
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'text/html');
+  res.write('<html><body><div>');
+  res.write('<h1>Greetings from the HTTP server!</h1>');
+  res.write('</div></body></html>');
+  res.end();
+}
+
+function getText(req, res) {
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'text/plain');
+  res.end('This is plain text');
+}
+
+function getComments(req, res) {
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'application/json');
+  res.end(JSON.stringify(comments));
+}
+
+function postComment(req, res) {
+  res.setHeader('Content-Type', 'text/plain');
+
+  if (req.headers['content-type'] === 'application/x-www-form-urlencoded') {
+    let body = '';
+
+    req.on('data', (chunk) => {
+      body += chunk.toString();
+    });
+
+    req.on('end', () => {
+      try {
+        //с помощью этого модуля преобразовываем строку в объект
+        const comment = qs.parse(body);
+        comments.push(comment);
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'text/html');
+
+        //по итогу получаем страницу с текстом и ссылкой на форму для нового коментария
+        res.write('<h1>Comment data was received</h1>');
+        res.write('<a href="/">Submit one more comment</a>');
+        res.end();
+      } catch (error) {
+        res.statusCode = 400;
+        res.end('Invalid Form data');
+      }
+    });
+  } else if (req.headers['content-type'] === 'application/json') {
+    let commentJSON = '';
+
+    req.on('data', (chunk) => (commentJSON += chunk));
+
+    req.on('end', () => {
+      try {
+        comments.push(JSON.parse(commentJSON));
+        res.statusCode = 200;
+        res.end('Comment data was received');
+      } catch (error) {
+        res.statusCode = 400;
+        res.end('Invalid JSON');
+      }
+    });
+  } else {
+    res.statusCode = 400;
+    res.end('Data must be in the JSON format or as form');
+  }
+}
+
+function handleNotFound(req, res) {
+  res.statusCode = 404;
+  res.setHeader('Content-Type', 'text/html');
+  res.end('<h1>Page not found!</h1>');
+}
+
+module.exports = {
+  getHTML,
+  getText,
+  getComments,
+  postComment,
+  handleNotFound,
+  getHome,
+};
