@@ -1900,3 +1900,116 @@ test('should multiply 5 and 10 and return 50', () => {
 
 //---------------------------
 //____Переменные среды____//
+process.env // объект с переменными среды , название как константы которые не меняються пока программа работает
+
+//Добавление переменных среды с помощью dotenv пакета
+
+//.env
+DB_USERNAME = 'admin'
+DB_PASSWOR = 346546
+DB_URL = '127.12....'
+
+//index.js
+require('dotenv').config();
+console.log(process.env.DB_USERNAME);
+console.log(process.env.DB_PASSWORD);
+console.log(process.env.DB_URL);
+
+//------------------------
+//____Express____//
+//Фреймворк для nodejs
+//Упрощает создание веб приложений и API
+//Прост в изучении
+//Публичная npm библиотека
+//очень популярен
+
+//npm install express
+
+const express = require('express')
+
+const PORT = 3000
+const app = express()
+
+app.get('/',(req,res) =>{
+  res.send('<h1>Hello</h1>')
+})
+
+app.listen(PORT, () => {
+  console.log('app is listening on port 3000');
+})
+
+//------------------------------
+//_Создание веб сервера c express
+const express = require('express');
+
+const app = express();
+
+app.get('/', (req, res) => res.send('Response from Express'));
+
+app.listen(5000, () => console.log('Server was started on port 5000'));
+
+//----------------------------
+//__Роутинг в приложении Express__//
+//Определяет как сервер отвечает на разные запросы клиентов
+
+//настройка роутинга
+//методы / путь / функция которая вызываеться при подключений, можно добовлять несколько обработчиков
+app.httpMethods(requestPath,handerFN)
+
+//-------------------------
+//_Несколько обработчкиков запроса
+
+//multiple-handlers / index.js
+const express = require('express');
+
+const app = express();
+
+//чтобы перейти ко второй функции нужно вызвать next()
+const firstHandler = (req, res, next) => {
+  console.log('first handler');
+  next();
+};
+const secondHandler = (req, res) => {
+  console.log('second handler');
+  res.send('Response from Express');
+};
+
+app.get('/', firstHandler, secondHandler);
+
+app.listen(5000, () => console.log('Server was started on port 5000'));
+
+//------------------------
+//_Несколько маршрутов в Express /  параметры маршрутов
+
+//вместо :userId модет быть любой id
+app.get('/users/:userId', (req,res) => {
+  console.log(req.params);//userId:'234'
+  console.log(req.params.userId);//234
+})
+
+//цепочка http методов
+app
+  //путь указываем в одном месте
+  .route('/users')
+  .get((req,res) => {
+    res.send('get req at / users path')
+  })
+  .post((req, res) => {
+    res.send('post req at / users path')
+  })
+
+//обычно маршруты кидаем в отдельный модуль
+//userd.js
+const express = require('express')
+export const userRouter = express.Router()
+userRouter.get('/',(req,res) => {
+  //code
+})
+
+//app.js
+const express = require('express')
+const usersRouter = require('./rotes/userd.js')
+
+const app = express()
+app.use('/users', usersRouter)
+
