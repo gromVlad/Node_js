@@ -1552,3 +1552,170 @@ server.listen(5000, () => {
   console.log('Server is listening at port 5000');
 });
 
+//-----------------------------
+//_Чтение из стандартного ввода в потоке
+import { Transform } from 'stream';
+import fs from 'fs';
+
+// Pipe to file
+const filePath = './files/stdin-dump.txt';
+const writeStream = fs.createWriteStream(filePath);
+
+//создали файл с текстом который ввели в консоли терминала
+process.stdin.pipe(writeStream);
+
+//process - объект который доступен везде,stdin - возврощает поток который подключаеться к стандартному вводу в терминале - ввод данных / stdout - вывод данных в терминал / stderr -стандартный вывод ошибок
+// Pipe to stdout
+process.stdin.pipe(process.stdout)
+
+//трансформируем поток
+const upperCaseStream = new Transform({
+  //оригинальные данные chunk / типо буффера - временная хранилище данных в оперативной памяти, также когда нужно работать с бинарными данными массив байт (спец кодировка) поэтому конвертируем буффер обратно в строку
+  //с помощью callback передаем уже измененные данные - cb / null означает что ошибки не возникла
+  transform: function (chunk, encoding, cb) {
+    const upperCased = chunk.toString().toUpperCase();
+    cb(null, upperCased);
+  },
+});
+
+const reverseStream = new Transform({
+  transform(chunk, encoding, cb) {
+    const arrayOfChars = chunk.toString().split('');
+    const lastChar = arrayOfChars.pop();
+    const reversed = arrayOfChars.reverse().concat(lastChar).join('');
+    cb(null, reversed);
+  },
+});
+
+//цепочка -> можем перенаправлять один поток в другой поток тем самым трансформируя наши данные введенные из терминала по итогу получим измененный результат
+process.stdin.pipe(upperCaseStream).pipe(reverseStream).pipe(process.stdout);
+
+//-----------------------
+//_Практика - Аргументы программы Node.js
+//Программа которая будет создавать файлы и записывать вних текстовый строки использя потоки, передадим название файла и количество строк
+//node createfile.js(путь у нашему файлу с кодом) text.txt(название файла) 1000(количество строк)
+
+//create-file.mjs
+// How to run program: node createfile.mjs <filename> <linesQty>
+import fs from 'fs';
+import path from 'path';
+
+//process.argv - массив с четырьмя элементами которые мы ввели в консоли (аргументы)
+
+if (!process.argv[2] || !process.argv[3]) {
+  console.log('Filename and lines qty must be supplied as arguments');
+  process.exit(0);
+}
+
+const fileName = process.argv[2];
+const linesQty = parseInt(process.argv[3]);
+if (isNaN(linesQty)) {
+  console.log('Lines qty must be a number');
+  process.exit(0);
+}
+
+const writeStream = fs.createWriteStream(path.join('./files', fileName));
+
+console.log('Start', performance.now());
+
+for (let i = 1; i <= linesQty; i++) {
+  writeStream.write(
+    `This is a line number ${i} in the automatically generated file\n`
+  );
+}
+console.log('End', performance.now());
+setTimeout(() => console.log('Timeout', performance.now()), 0);
+
+writeStream.end(() => {
+  console.log(
+    `Automatically generated file ${fileName} with ${linesQty} lines was created!`
+  );
+});
+//third.txt
+//This is a line number 1 in the automatically generated file ...
+
+//---------------------
+//_Практика - Копирование файла с помощью потока
+
+//copy-file-in-stream.mjs
+import fs from 'fs';
+
+const fileName = './files/fifth.txt';
+const copiedFileName = './files/fifth-copy.txt';
+
+const readStream = fs.createReadStream(fileName);
+const writeStream = fs.createWriteStream(copiedFileName);
+
+readStream.pipe(writeStream);
+
+readStream.on('end', () => console.log('Read stream ended'));
+writeStream.on('finish', () => console.log('File was copied'));
+writeStream.on('close', () => console.log('Write stream closed'));
+
+//'Read stream ended'
+//'File was copied'
+//'Write stream closed'
+
+//---------------------
+//_Практика - Копирование папки с файлами в другую папку с помощью потоков
+
+//copy-files-in-folder.mjs
+import fs from 'fs';
+import path from 'path';
+
+const sourceDir = './files';
+const destinationDir = './copied-files';
+
+//проверка что такая папка существует
+if (!fs.existsSync(sourceDir)) {
+  console.warn(`Source dir ${sourceDir} doesn't exist!`);
+  console.log('Exiting...');
+  process.exit(0);
+}
+
+//если папка есть то удаляем папку
+if (fs.existsSync(destinationDir)) {
+  //recursive - позволит удалить все папки внутри рекурсивно 
+  fs.rmSync(destinationDir, { recursive: true });
+}
+
+//создаем
+fs.mkdirSync(destinationDir);
+
+fs.readdir(sourceDir, (err, fileNames) => {
+  if (err) {
+    console.log(err);
+    process.exit(1);
+  }
+  //получаем массив с файлами которые лежат в этой папке
+  console.log(fileNames)
+  console.log('Start', performance.now());
+  fileNames.forEach((fileName, index) => {
+    //путь к файлу который мы копируем
+    const sourceFilePath = path.join(sourceDir, fileName);
+
+    //путь куда мы копируем
+    const destinationFilePath = path.join(
+      destinationDir,
+      `${index + 1}. ${fileName}`
+    );
+
+    const readFileStream = fs.createReadStream(sourceFilePath);
+    const writeFileStream = fs.createWriteStream(destinationFilePath);
+
+    readFileStream.pipe(writeFileStream);
+
+    writeFileStream.on('finish', () => {
+      console.log(`File ${fileName} was copied`);
+    });
+  });
+  console.log('End', performance.now());
+});
+
+//./files/ first.txt ... -> ./copied-files/1. first.txt
+//File ... was copied
+//End
+
+//-------------------------------------
+//__NPM - Менеджер пакетов в Node.js___//
+
