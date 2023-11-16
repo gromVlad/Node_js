@@ -2399,4 +2399,69 @@ app.listen(5000, () => console.log('server is listening at port 5000'));
 
 
 //-----------------------------
-//__Создание фронтенд приложения React__//
+//__Создание мини приложения(фронтенд и бэк)__//
+
+//npx - можно скачать однократно приложения
+
+//backend/ app.mjs
+import express from 'express';
+import morgan from 'morgan';
+
+//мы работаем на разных хостах и чтобы наше приложения работало нам нужно использовать cors
+import cors from 'cors';
+
+const app = express();
+
+// logs info about request
+app.use(morgan('tiny'));
+
+// converts JSON to JS Object in POST, PUT, PATCH requests
+
+app.use(express.json());
+// convets form data to JS Object in POST, PUT, PATCH requests
+
+app.use(express.urlencoded({ extended: true }));
+
+// используем cors для всех запросов
+app.use(cors());
+
+app.use((req, res) => {
+  const personData = {
+    name: 'Vlad',
+    isInstructor: true,
+  };
+  console.log(req.body);
+  return res.json(personData);
+});
+
+app.listen(5000, () => console.log('server is listening at port 5000'));
+
+//frontend/... /App.js
+
+function App() {
+  const [person, setPerson] = useState();
+
+  useEffect(() => {
+    fetch('http://127.0.0.1:5000')
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(data);
+        setPerson(data);
+      })
+      .catch((err) => console.log(err));
+  }, []);
+
+  return (
+    <div className="App">
+      {person && (
+        <>
+          <h1>{person.name}</h1>
+          <h2>{person.isInstructor ? 'Instructor' : 'Student'}</h2>
+        </>
+      )}
+    </div>
+  );
+}
+export default App;
+
+

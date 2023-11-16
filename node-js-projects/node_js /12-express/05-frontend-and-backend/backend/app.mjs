@@ -15,7 +15,7 @@ app.use(cors());
 
 app.use((req, res) => {
     const personData = {
-        name: 'Bogdan',
+        name: 'Vlad',
         isInstructor: true,
     };
     console.log(req.body);
