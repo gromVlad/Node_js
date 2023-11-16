@@ -665,7 +665,7 @@ module.exports = greeting;
 // exports = greeting;
 
 //export-and-import.js
-const { myName, myHobbies } = require('./multiple-exports');
+const { myName, myHobbies } = require('./multiple-exports.js');
 
 const myFriendsName = 'Alice';
 
@@ -675,16 +675,16 @@ module.exports.myFriendsName = myFriendsName;
 module.exports.myGreatHobbies = myHobbies;
 
 //index.js
-const { myName, myHobbies, myFavoriteNumber } = require('./multiple-exports');
+const { myName, myHobbies, myFavoriteNumber } = require('./multiple-exports.js');
 
 //переменовываем название перменной myOtherName
 const {
   myName: myOtherName,
   myFriendsName,
   myGreatHobbies,
-} = require('./export-and-import');
+} = require('./export-and-import.js');
 
-const greetingFn = require('./my-modules/single-export');
+const greetingFn = require('./my-modules/single-export.js');
 // // DON'T USE ABSOLUTE PATHS
 // const greetingFn = require('/Users/bogdan/Desktop/node/03-commonjs-modules/single-export.js');
 
@@ -1288,7 +1288,7 @@ const {
   handleNotFound,
   postComment,
   getHome,
-} = require('./handlers');
+} = require('./handlers.js');
 
 const PORT = 5000;
 
@@ -1329,7 +1329,7 @@ module.exports = comments;
 //handlers.js
 const fs = require('fs');
 const qs = require('querystring');
-const comments = require('./data');
+const comments = require('./data.js');
 
 //получаем html страницу
 function getHome(req, res) {
@@ -1878,7 +1878,7 @@ function mult(a, b) {
 module.exports = mult;
 
 //mult.test.js
-const mult = require('./mult');
+const mult = require('./mult.js');
 
 test('should multiply 5 and 10 and return 50', () => {
   expect(mult(5, 10)).toBe(50);
@@ -2013,3 +2013,390 @@ const usersRouter = require('./rotes/userd.js')
 const app = express()
 app.use('/users', usersRouter)
 
+//----------------------
+//_Практика - Express маршруты
+//функции отдельно, пути отдельно, далее все пути совмещаем , также используем use для уменьшение длины путей
+
+//controllers/comments.js
+const getCommentsHandler = (req, res) => {
+  res.send('Get comments route');
+};
+
+const getSingleCommentHandler = (req, res) => {
+  res.send(`Get comment route. CommentId ${req.params.commentId}`);
+};
+
+const postCommentsHandler = (req, res) => {
+  res.send('Post comments route');
+};
+
+const deleteSingleCommentHandler = (req, res) => {
+  res.send(`Delete comment route. CommentId ${req.params.commentId}`);
+};
+
+module.exports = {
+  getCommentsHandler,
+  getSingleCommentHandler,
+  postCommentsHandler,
+  deleteSingleCommentHandler,
+};
+
+//controllers/users.js
+const getUsersHandler = (req, res) => {
+  res.send('Get users route');
+};
+
+const getSingleUserHandler = (req, res) => {
+  res.send(`Get user route. UserId ${req.params.userId}`);
+};
+
+const postUsersHandler = (req, res) => {
+  res.send('Post users route');
+};
+
+module.exports = {
+  getUsersHandler,
+  getSingleUserHandler,
+  postUsersHandler,
+};
+
+//controllers/root.js
+const getRootHandler = (req, res) => {
+  res.send('Get root route');
+};
+
+module.exports = { getRootHandler };
+
+//commets.js
+const express = require('express');
+const {
+  getCommentsHandler,
+  postCommentsHandler,
+  getSingleCommentHandler,
+  deleteSingleCommentHandler,
+} = require('../controllers/comments');
+
+const router = express.Router();
+
+router.get('/', getCommentsHandler);
+router.post('/', postCommentsHandler);
+router.get('/:commentId', getSingleCommentHandler);
+router.delete('/:commentId', deleteSingleCommentHandler);
+
+module.exports = router;
+
+//users.js
+const express = require('express');
+const {
+  getUsersHandler,
+  postUsersHandler,
+  getSingleUserHandler,
+} = require('../controllers/users');
+
+const router = express.Router();
+
+router.get('/', getUsersHandler);
+router.post('/', postUsersHandler);
+router.get('/:userId', getSingleUserHandler);
+
+module.exports = router;
+
+//root.js
+const express = require('express');
+const { getRootHandler } = require('../controllers/root');
+
+const router = express.Router();
+
+router.get('/', getRootHandler);
+
+module.exports = router;
+
+//index.js
+const express = require('express');
+const commentsRouter = require('./comments.js');
+const usersRouter = require('./users.js');
+const rootRouter = require('./root.js');
+
+const router = express.Router();
+
+//use  работает по не точному пути да же если будет например comments/id... то все равно будет работать но такие пути как get и т.д. работают только по точному совпадению
+router.use('/comments', commentsRouter);
+router.use('/users', usersRouter);
+router.use('/', rootRouter);
+
+module.exports = router;
+
+//app.js
+const express = require('express');
+const router = require('./routes.js');
+
+const app = express();
+
+app.use(router);//("/",router) - можно не добовлять / все равно будут отпровляться запросы
+
+app.listen(5000, () => console.log('Server was started on port 5000'));
+
+//--------------------------------
+//___Паттерн программирования MVC___//
+//Model View controller
+
+//Model отвечает за взаимодействия с базой данных, интерфейс взаимодействия , сохраняем целостность т.к. все взаимодействия реализовано через модель
+// View видимый для пользователя интерфейс (презентационная часть)
+//Сontroller отвечает за всю логику взаимодействия модели с видами (посредник)
+//Каждую базу данных следует структурировать согласно паттерну MVC
+
+//DB (база данных где храняться определенные документы и т.д.) <--> model(user,comments,post - эти модели позволяют абстрагироваться от непосредственного взаимодействия с DB) <--> Сontroller(вся логика взаимодействия клиента и сервера, Routes - маршруты как часть контролера ) <--> View(мы создаем видимую часть приложения)
+
+//--------------------------
+//_Middleware функции в Express
+//Функция которая выполняеться в процессе обработки запроса и отправки ответа
+//Может быть несколько таких функций
+//порядок следование важен
+
+//Запрос от клиента (request) -> Middleware_1 (в самом вверху приложения, 3 параметр next) -> Middleware_2 (next) -> Middleware_3
+
+//Что может делать функция Middleware:
+// - любая функция Middleware может дать ответ клиенту
+// - выполнять любой код
+// - изменять объекты request / response
+// - вызвать следующую функцию Middleware
+
+//Middleware функция должна либо вызвать следующую функцию либо заверщить цикл запрос-ответ
+function logger (req,res,next) {
+  console.log('hello');
+  next()
+}
+//использование , можно использовать множество подключений
+app.use(logger)
+
+//использование анонимной функций, можно не создавать отдельно / не рекомендуеться так делать , следует помещать Middleware в отдельную папку
+app.use((req, res, next) => {
+  console.log('hello');
+  next()
+})
+
+//---------------------------
+//_Практика - Добавление middleware функций
+import express from 'express';
+
+const app = express();
+
+const Logger = (req, res, next) => {
+  console.log(req.method, req.path); // get , /
+  next()
+}
+
+app.use(Logger,(req, res) => {
+  console.log(req.body);
+  return res.send('This is express server');
+});
+
+app.listen(5000, () => console.log('server is listening at port 5000'));
+
+//---------------------------
+//_Логирование с помощью morgan
+import express from 'express';
+//можно логировать информацию о запросах клиента (получить дату запроса, метод, путь, протокол, код ответа от сервера и т.д.),внутри реализован next
+import morgan from 'morgan';
+
+const app = express();
+
+// logs info about request
+app.use(morgan('tiny'));
+
+app.use((req, res) => { 
+  console.log(req.body);
+  return res.send('This is express server');
+});
+
+app.listen(5000, () => console.log('server is listening at port 5000'));
+
+//-------------------------
+//_Парсинг JSON от клиента без middleware
+import express from 'express';
+import morgan from 'morgan';
+
+const app = express();
+
+app.use(morgan('tiny'));
+
+app.use((req,res,next) => {
+  let data = ''
+  req.on('data',(chunk) => (data += chunk))
+  req.on('end', () => console.log(data))
+  next()
+})
+
+app.use((req, res) => {
+  return res.send('This is express server');
+});
+
+app.listen(5000, () => console.log('server is listening at port 5000'));
+
+//---------------------------
+//_Парсинг JSON от клиента с помощью middleware
+import express from 'express';
+import morgan from 'morgan';
+
+const app = express();
+
+app.use(morgan('tiny'));
+
+app.use((req, res, next) => {
+  let data = ''
+  req.on('data', (chunk) => (data += chunk))
+  req.on('end', () => {
+    const parseJSON = JSON.parse(data)
+    req.body = parseJSON
+  })
+  next()
+})
+
+//не получаем body т.к next получаем быстрее и поэтому req.body = parseJSON уже происходит после
+app.use((req, res) => {
+  console.log(req.body);//undefined
+  return res.send('This is express server');
+});
+
+app.listen(5000, () => console.log('server is listening at port 5000'));
+
+//чтобы работала надо функцию next() перенести внутрь логики 'end'
+req.on('end', () => {
+  const parseJSON = JSON.parse(data)
+  req.body = parseJSON
+  next()
+})
+
+app.use((req, res) => {
+  console.log(req.body);//{...}
+  return res.send('This is express server');
+});
+
+//также вместо всего этого кода можем использовать специальный метод делает то же самое
+/* 
+app.use((req, res, next) => {
+  let data = ''
+  req.on('data', (chunk) => (data += chunk))
+  req.on('end', () => {
+    const parseJSON = JSON.parse(data)
+    req.body = parseJSON
+  })
+  next()
+})
+*/
+//middleware функция
+app.use(express.json());
+
+//----------------------------
+//_Парсинг формы от клиента без middleware
+import express from 'express';
+import morgan from 'morgan';
+import qs from 'querystring';
+
+const app = express();
+
+app.use(morgan('tiny'));
+
+app.use(express.json());
+
+app.use((req, res, next) => {
+  console.log(req);
+  console.log(req.header['content-type']);//application/x-www-form-urlencoded
+  if (req.header['content-type'] === 'application/x-www-form-urlencoded'){
+    let data = ''
+    req.on('data', (chunk) => (data += chunk.toString()))
+    req.on('end', () => {
+      console.log(data);//name=VLad&isInst=true&hobbies=cycling&hobbies=swimming
+      const parseFormData = qs.parse(data)
+      console.log(parseFormData);
+      /* 
+      {
+        name:"Vlad",
+        isInst:true,
+        hobbies:[swimming,cycling]
+      }
+      */
+      req.body = parseFormData
+      next()
+    })
+  } else {
+    next()
+  }
+})
+
+app.use((req, res) => {
+  console.log(req.body);//{}
+  return res.send('This is express server');
+});
+
+app.listen(5000, () => console.log('server is listening at port 5000'));
+
+//-------------------------
+//_Парсинг формы от клиента с помощью middleware
+import express from 'express';
+import morgan from 'morgan';
+
+const app = express();
+
+app.use(morgan('tiny'));
+
+app.use(express.json());
+
+//то же самое только с помощью функции middleware который выполняет парсинг
+// app.use((req, res, next) => {
+//   console.log(req);
+//   console.log(req.header['content-type']);//application/x-www-form-urlencoded
+//   if (req.header['content-type'] === 'application/x-www-form-urlencoded') {
+//     let data = ''
+//     req.on('data', (chunk) => (data += chunk.toString()))
+//     req.on('end', () => {
+//       console.log(data);//name=VLad&isInst=true&hobbies=cycling&hobbies=swimming
+//       const parseFormData = qs.parse(data)
+//       console.log(parseFormData);
+//       /* 
+//       {
+//         name:"Vlad",
+//         isInst:true,
+//         hobbies:[swimming,cycling]
+//       }
+//       */
+//       req.body = parseFormData
+//       next()
+//     })
+//   } else {
+//     next()
+//   }
+// })
+//extended: true - использовать внешний модуль
+app.use(express.urlencoded({ extended: true }));
+
+app.use((req, res) => {
+  console.log(req.body);//{}
+  return res.send('This is express server');
+});
+
+app.listen(5000, () => console.log('server is listening at port 5000'));
+
+//по итогу получаем данные в зависемости что приходит запрос по форме или json,все они middleware и могут работать по цепочке
+import express from 'express';
+import morgan from 'morgan';
+
+const app = express();
+
+// logs info about request
+app.use(morgan('tiny'));
+// converts JSON to JS Object in POST, PUT, PATCH requests
+app.use(express.json());
+// convets form data to JS Object in POST, PUT, PATCH requests
+app.use(express.urlencoded({ extended: true }));
+
+app.use((req, res) => {
+  console.log(req.body);
+  return res.send('This is express server');
+});
+
+app.listen(5000, () => console.log('server is listening at port 5000'));
+
+
+//-----------------------------
+//__Создание фронтенд приложения React__//
