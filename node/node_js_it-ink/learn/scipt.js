@@ -48,5 +48,16 @@ app.listen(port, () => {
 */
 //запускаем на разных консолях
 
-//------------------------------------
-//_________
+//---------------------------------------------------------
+//__02 - 1 - Deploy to Heroku for simple TS Express App__//
+//Heroku - облочный сервер
+//Связываем github и heroku
+
+/* 
+"scripts": {
+    "watch": "tsc -w",
+    "dev": "nodemon --inspect dist/index.js",
+    "build":"tsc", -> для компиляиции на heroku без -w
+    "start":"node dist/index.js" -> для компиляиции на heroku без nodemon
+  },
+*/
