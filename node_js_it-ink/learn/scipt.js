@@ -61,3 +61,6 @@ app.listen(port, () => {
     "start":"node dist/index.js" -> для компиляиции на heroku без nodemon
   },
 */
+
+//создаем переменные окружения чтобы ссылся не на порт 5000 а на другие протоколы
+//const port = process.env.POPT || 5000
