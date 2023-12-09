@@ -11,7 +11,6 @@ const addresses = [
 ];
 
 const parserMiddleware = bodyParser({})
-//каждый запрос пройдет обработку через Middleware / он обработает под капотом файлы приходящие в том числе и post запрос от body
 app.use(parserMiddleware)
 
 app.get("/", (req: Request, res: Response) => {
@@ -19,8 +18,6 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 app.get('/products', (req:Request, res:Response) => {
-  //фильтрация по query параметру
-  //http://localhost:5000/products?title=to => {"title": "tomato"}
   if (req.query.title) {
     let search = req.query.title.toString();
     res.send(products.filter((el) => el.title?.indexOf(search) > -1));
@@ -32,7 +29,6 @@ app.get('/products', (req:Request, res:Response) => {
 app.get('/products/:id', (req:Request, res:Response) => {
   let product = products.find((el) => el.id === +req.params.id);
 
-  //возврощает статус код 404 send воспринимает цифры как статус ошибки
   if (!product) {
     res.send(404);
   }
@@ -42,8 +38,6 @@ app.get('/products/:id', (req:Request, res:Response) => {
 
 app.get("/address/:id", (req: Request, res: Response) => {
    let idAdress = addresses.find((el) => el.id === +req.params.id );
-
-   //возврощает статус код 404 send воспринимает цифры как статус ошибки
    if (!idAdress) {
      res.send(404);
    }
@@ -61,7 +55,6 @@ app.delete("/products/:id", (req: Request, res: Response) => {
   return res.sendStatus(404);
 });
 
-//post наличие body запроса
 app.post("/products", (req: Request, res: Response) => {
   let newProduct = {
     id:+(new Date()),
@@ -70,15 +63,7 @@ app.post("/products", (req: Request, res: Response) => {
   products.push(newProduct)
   res.status(201).send(newProduct)
 });
-/* 
-{
-  "id": 1702130606839,
-  "title": "hello"
-}
-*/
 
-//put - update
-//можем отправить все изменения с телом запроса но обычно кидаем все в url
 app.put("/products/:id", (req: Request, res: Response) => {
   let product = products.find((el) => el.id === +req.params.id);
   if (product){
