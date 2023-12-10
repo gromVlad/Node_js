@@ -1,5 +1,6 @@
 import express, { Request, Response, Router } from "express";
 import { productsRepo } from "../repo/products-repo";
+import { validateInput } from "../midleWeareInput/validateInput";
 
 export const commentsRouter = Router()
 
@@ -26,7 +27,7 @@ commentsRouter.delete("/:id", (req: Request, res: Response) => {
   }
 });
 
-commentsRouter.post("/", (req: Request, res: Response) => {
+commentsRouter.post("/",validateInput, (req: Request, res: Response) => {
   let newProduct = productsRepo.addProduct(req.body.title);
   res.status(201).send(newProduct);
 });

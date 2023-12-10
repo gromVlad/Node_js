@@ -329,6 +329,80 @@ commentsRouter.put("/:id", (req: Request, res: Response) => {
   res.send(result)
 });
 
-//------------------------------------------
-//_______
+//-------------------------------------------------------
+//___06 - Express middleware, chain of responsibility___//
+//промежуточный слой
+//имеет значения последовательность
+
+/* 
+Паттерн "Цепочка" (или "Chain of Responsibility") относится к категории паттернов проектирования, которые используются для организации взаимодействия объектов. Он позволяет передавать запросы последовательно по цепочке потенциальных обработчиков, пока один из них не обработает запрос.
+Основная идея паттерна в том, чтобы связать объекты в цепочку и передавать запрос от одного объекта к другому до тех пор, пока запрос не будет обработан или пока не достигнут конец цепочки. Каждый объект в цепочке представляет собой потенциального обработчика запроса и имеет ссылку на следующий объект в цепочке.
+*/
+
+//создаем промежуточный слой типо охраник
+//...?token===123
+const authGuard = (req: Request, res: Response, next: NextFunction) => {
+  if (req.query.token === '123') {
+    next();
+  } else {
+    res.send(404)
+  }
+}
+
+//подсчет запросов
+let countReq = 0
+const requestCountFun = (req: Request, res: Response, next: NextFunction) => {
+  countReq++
+  next()
+}
+
+app.use(authGuard)
+app.use(requestCountFun);
+
+
+//-------------------------------------------------------
+//____07 - 1 - input validation, express-validator____//
+//все входящие потоки данных надо валидировать
+
+// Пример использования middleware с Express Validator
+app.post('/users', [
+  body('name').notEmpty().withMessage('Имя обязательно'),
+  body('email').isEmail().withMessage('Некорректный email'),
+  body('password').isLength({ min: 6 }).withMessage('Пароль должен быть не менее 6 символов'),
+], validateInput, (req, res) => {
+  // Если валидация успешна, выполняется обработчик маршрута
+  // ...
+});
+
+//validateInput.ts
+export function validateInput(req: Request, res: Response, next: NextFunction) {
+  // Проверка результатов валидации
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    // Если есть ошибки, возвращаем ответ с кодом ошибки и сообщением об ошибках
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  // Если ошибок нет, передаем управление следующему middleware или обработчику маршрута
+  next();
+}
+
+//products-routes.ts
+//....
+commentsRouter.post("/", validateInput, (req: Request, res: Response) => {
+  let newProduct = productsRepo.addProduct(req.body.title);
+  res.status(201).send(newProduct);
+});
+
+//---------------------------------
+//__07 - 2 - Basic Authorization__//
+//в каждый заголовок мы пишем определенный токен и данные
+//кладем в определенном формате данные
+//обычно логинимся один раз
+//При basic авторизации отровляем при запросе каждый раз пароль и логин
+//Basic_Login:pass -> зашифруем в base64 кодировку
+
+//-----------------------------------------------------
+//__08 - MongoDB, mongod and mongo shell, Studio 3T__//
+
 
