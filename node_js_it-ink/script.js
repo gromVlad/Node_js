@@ -210,7 +210,6 @@ addressesRouter.get("/address/:id", (req: Request, res: Response) => {
 //index.ts
 app.use("/addresses", addressesRouter);
 
-
 //-------------------------------------------
 //____05 - DataAccessLayer - Repositories__//
 //архетиктура
@@ -226,8 +225,8 @@ const addresses = [
 export const addressesRepo = {
   getAddressesId(id: number) {
     return addresses.find((el) => el.id === id);
-  }
-}
+  },
+};
 
 //addresses-routes.ts
 import express, { Request, Response, Router } from "express";
@@ -236,13 +235,12 @@ import { addressesRepo } from "../repo/addresses-repo";
 export const addressesRouter = Router();
 
 addressesRouter.get("/:id", (req: Request, res: Response) => {
-  let idAdress = addressesRepo.getAddressesId(+req.params.id)
+  let idAdress = addressesRepo.getAddressesId(+req.params.id);
   if (!idAdress) {
     res.send(404);
   }
   res.send(idAdress);
 });
-
 
 //products-repo.ts
 const products = [
@@ -255,7 +253,7 @@ export const productsRepo = {
     if (search) {
       return products.filter((el) => el.title?.indexOf(search) > -1);
     } else {
-      return products
+      return products;
     }
   },
   getProductsId(id: number) {
@@ -265,9 +263,9 @@ export const productsRepo = {
     for (let i = 0; i < products.length; i++) {
       if (products[i].id === id) {
         products.splice(i, 1);
-        return true
+        return true;
       } else {
-        return false
+        return false;
       }
     }
   },
@@ -277,24 +275,24 @@ export const productsRepo = {
       title: title,
     };
     products.push(newProduct);
-    return newProduct
+    return newProduct;
   },
   updateProduct(id: number, title: string) {
     let product = products.find((el) => el.id === id);
     if (product) {
       product.title = title;
-      return product
+      return product;
     } else {
-      return 404
+      return 404;
     }
-  }
+  },
 };
 
 //products-routes.ts
 import express, { Request, Response, Router } from "express";
 import { productsRepo } from "../repo/products-repo";
 
-export const commentsRouter = Router()
+export const commentsRouter = Router();
 
 commentsRouter.get("/", (req: Request, res: Response) => {
   let result = productsRepo.getAllProductWithTitle(req.query.title?.toString());
@@ -308,7 +306,6 @@ commentsRouter.get("/:id", (req: Request, res: Response) => {
   }
   res.send(product);
 });
-
 
 commentsRouter.delete("/:id", (req: Request, res: Response) => {
   let result = productsRepo.deleteProduct(+req.params.id);
@@ -326,7 +323,7 @@ commentsRouter.post("/", (req: Request, res: Response) => {
 
 commentsRouter.put("/:id", (req: Request, res: Response) => {
   let result = productsRepo.updateProduct(+req.params.id, req.body.title);
-  res.send(result)
+  res.send(result);
 });
 
 //-------------------------------------------------------
@@ -342,37 +339,43 @@ commentsRouter.put("/:id", (req: Request, res: Response) => {
 //создаем промежуточный слой типо охраник
 //...?token===123
 const authGuard = (req: Request, res: Response, next: NextFunction) => {
-  if (req.query.token === '123') {
+  if (req.query.token === "123") {
     next();
   } else {
-    res.send(404)
+    res.send(404);
   }
-}
+};
 
 //подсчет запросов
-let countReq = 0
+let countReq = 0;
 const requestCountFun = (req: Request, res: Response, next: NextFunction) => {
-  countReq++
-  next()
-}
+  countReq++;
+  next();
+};
 
-app.use(authGuard)
+app.use(authGuard);
 app.use(requestCountFun);
-
 
 //-------------------------------------------------------
 //____07 - 1 - input validation, express-validator____//
 //все входящие потоки данных надо валидировать
 
 // Пример использования middleware с Express Validator
-app.post('/users', [
-  body('name').notEmpty().withMessage('Имя обязательно'),
-  body('email').isEmail().withMessage('Некорректный email'),
-  body('password').isLength({ min: 6 }).withMessage('Пароль должен быть не менее 6 символов'),
-], validateInput, (req, res) => {
-  // Если валидация успешна, выполняется обработчик маршрута
-  // ...
-});
+app.post(
+  "/users",
+  [
+    body("name").notEmpty().withMessage("Имя обязательно"),
+    body("email").isEmail().withMessage("Некорректный email"),
+    body("password")
+      .isLength({ min: 6 })
+      .withMessage("Пароль должен быть не менее 6 символов"),
+  ],
+  validateInput,
+  (req, res) => {
+    // Если валидация успешна, выполняется обработчик маршрута
+    // ...
+  }
+);
 
 //validateInput.ts
 export function validateInput(req: Request, res: Response, next: NextFunction) {
@@ -404,5 +407,233 @@ commentsRouter.post("/", validateInput, (req: Request, res: Response) => {
 
 //-----------------------------------------------------
 //__08 - MongoDB, mongod and mongo shell, Studio 3T__//
+//система управления базами данными (таблицы колекции и т.д)
+//mongo - облочный сервис хранения данных
+//через точечную нотацию обращаемся к базе создавая массивы и колекции данных
+//db.getCollection('vidios') - создает колекцию новую дальше можем через команду .insertMany({},{}...) создавать различные колеции данных
+//.find() -получать данные
+//чтобы работать не в консоли у нас есть gui для баз данных которые визуализируют работу в ней для удобства
+//важно серверу дать правильный путь к нашей новой базе данных (создать и подключить)
+//стартуем с начало сервер а далее через консоль и через визуальный интерфейс работает с этой базой данной
+//MongoDB не работает в РФ и РБ блокировка входа в аккаунт(sign in)
 
+//-------------------------------
+//_____09 - MongoDB CRUD____//
+/* 
+Create (Создание)
+Вставка нового документа в коллекцию "users"
+db.users.insertOne({
+  name: "John",
+  age: 30,
+  email: "john@example.com"
+})
 
+Read (Чтение)
+Получение всех документов из коллекции "users"
+db.users.find()
+получение документа из коллекции "users" по заданному критерию.
+db.users.find({ name: "John" })
+
+Update (Обновление)
+Обновление поля "age" в документе коллекции "users" по заданному критерию
+db.users.updateOne(
+  { name: "John" },
+  { $set: { age: 31 } }
+)
+
+Delete (Удаление)
+Удаление документа из коллекции "users" по заданному критерию
+db.users.deleteOne({ name: "John" })
+
+*/
+
+//------------------------------
+//___eventloop, async-await___//
+//js однопоточный / процессор обрабатывает один поток
+//на бэк много пользователей которые постоянно кидают запросы
+//нам нужно асинхронно обрабытывать запросы чтобы не было задержак с помощью Promise
+//все запросы и работы с базами данных нам нужно оборачивать в асинхронные функцию чтобы не прерывать поток
+
+//addresses-repo.ts
+type AddressType = {
+  id: number,
+  value: string,
+};
+
+const addresses: AddressType[] = [
+  { id: 1, value: "vlad" },
+  { id: 2, value: "nikita" },
+];
+
+export const addressesRepo = {
+  async getAddressesId(id: number): Promise<AddressType | undefined> {
+    return addresses.find((el) => el.id === id);
+  },
+};
+
+//addresses-routes.ts
+import express, { Request, Response, Router } from "express";
+import { addressesRepo } from "../repo/addresses-repo";
+
+export const addressesRouter = Router();
+
+addressesRouter.get("/:id", async (req: Request, res: Response) => {
+  let idAdress = await addressesRepo.getAddressesId(+req.params.id);
+  if (!idAdress) {
+    res.send(404);
+  }
+  res.send(idAdress);
+});
+
+//--------------------------
+//____nodeJS + mongoDB___//
+//id при  добовлении сразу генерируеться
+//соединяем бэк и базу данных
+
+//mongo.ts
+const { MongoClient } = require("mongodb");
+
+const portDB = process.env.mongoURL || "mongodb://localhost:27017";
+
+// Подключение к MongoDB
+//можем дальше подключаться к нему и пользоваться
+export const client = await MongoClient.connect(portDB);
+console.log("Успешное подключение к MongoDB");
+
+async function connectAndPerformOperations() {
+  try {
+    await client.connect();
+    console.log("Connected successfully to mongo server");
+  } catch (error) {
+    client.close();
+    console.log("Подключение к MongoDB закрыто");
+  }
+}
+
+//index.ts
+app.listen(port, async () => {
+  await connectAndPerformOperations();
+  console.log(`Example app listening on port ${port}`);
+});
+
+//создаем репо который будет работать с базой данных
+//то есть должны подставить вместо наших локальных функции работу с базой данных
+
+//productsRepo-db.ts
+import { MongoClient, ObjectId } from "mongodb";
+
+const url = "mongodb://localhost:27017";
+const dbName = "mydatabase";
+const collectionName = "products";
+
+interface ProductType {
+  _id: ObjectId;
+  title: string;
+}
+
+const client = new MongoClient(url);
+
+export const productsRepo = {
+  async connectToDB(): Promise<void> {
+    try {
+      await client.connect();
+      console.log("Успешное подключение к MongoDB");
+    } catch (error) {
+      console.error("Ошибка подключения к MongoDB:", error);
+    }
+  },
+
+  async disconnectFromDB(): Promise<void> {
+    try {
+      await client.close();
+      console.log("Подключение к MongoDB закрыто");
+    } catch (error) {
+      console.error("Ошибка при закрытии подключения к MongoDB:", error);
+    }
+  },
+
+  async getAllProductWithTitle(search?: string | null): Promise<ProductType[]> {
+    try {
+      const db = client.db(dbName);
+      const collection = db.collection < ProductType > collectionName;
+
+      if (search) {
+        const regex = new RegExp(search, "i");
+        const filter = { title: regex };
+        return await collection.find(filter).toArray();
+      } else {
+        return await collection.find().toArray();
+      }
+    } catch (error) {
+      console.error("Ошибка при получении продуктов:", error);
+      return [];
+    }
+  },
+
+  async getProductById(id: string): Promise<ProductType | undefined> {
+    try {
+      const db = client.db(dbName);
+      const collection = db.collection < ProductType > collectionName;
+
+      const filter = { _id: new ObjectId(id) };
+      return await collection.findOne(filter);
+    } catch (error) {
+      console.error("Ошибка при получении продукта по ID:", error);
+      return undefined;
+    }
+  },
+
+  async deleteProduct(id: string): Promise<boolean | undefined> {
+    try {
+      const db = client.db(dbName);
+      const collection = db.collection < ProductType > collectionName;
+
+      const filter = { _id: new ObjectId(id) };
+      const result = await collection.deleteOne(filter);
+
+      return result.deletedCount === 1;
+    } catch (error) {
+      console.error("Ошибка при удалении продукта:", error);
+      return undefined;
+    }
+  },
+
+  async addProduct(title: string): Promise<ProductType | undefined> {
+    try {
+      const db = client.db(dbName);
+      const collection = db.collection < ProductType > collectionName;
+
+      const newProduct = { title };
+      const result = await collection.insertOne(newProduct);
+
+      return result.ops[0];
+    } catch (error) {
+      console.error("Ошибка при добавлении продукта:", error);
+      return undefined;
+    }
+  },
+
+  async updateProduct(
+    id: string,
+    title: string
+  ): Promise<ProductType | number> {
+    try {
+      const db = client.db(dbName);
+      const collection = db.collection < ProductType > collectionName;
+
+      const filter = { _id: new ObjectId(id) };
+      const update = { $set: { title } };
+      const options = { returnOriginal: false };
+      const result = await collection.findOneAndUpdate(filter, update, options);
+
+      if (result.value) {
+        return result.value;
+      } else {
+        return 404;
+      }
+    } catch (error) {
+      console.error("Ошибка при обновлении продукта:", error);
+      return undefined;
+    }
+  },
+};

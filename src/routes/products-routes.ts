@@ -4,13 +4,13 @@ import { validateInput } from "../midleWeareInput/validateInput";
 
 export const commentsRouter = Router()
 
-commentsRouter.get("/", (req: Request, res: Response) => {
-  let result = productsRepo.getAllProductWithTitle(req.query.title?.toString());
+commentsRouter.get("/", async (req: Request, res: Response) => {
+  let result = await productsRepo.getAllProductWithTitle(req.query.title?.toString());
   res.send(result);
 });
 
-commentsRouter.get("/:id", (req: Request, res: Response) => {
-  let product = productsRepo.getProductsId(+req.params.id);
+commentsRouter.get("/:id",async (req: Request, res: Response) => {
+  let product = await productsRepo.getProductsId(+req.params.id);
   if (!product) {
     res.send(404);
   }
@@ -18,8 +18,8 @@ commentsRouter.get("/:id", (req: Request, res: Response) => {
 });
 
 
-commentsRouter.delete("/:id", (req: Request, res: Response) => {
-  let result = productsRepo.deleteProduct(+req.params.id);
+commentsRouter.delete("/:id",async (req: Request, res: Response) => {
+  let result = await productsRepo.deleteProduct(+req.params.id);
   if (result) {
     return res.sendStatus(204);
   } else {
@@ -27,12 +27,12 @@ commentsRouter.delete("/:id", (req: Request, res: Response) => {
   }
 });
 
-commentsRouter.post("/",validateInput, (req: Request, res: Response) => {
-  let newProduct = productsRepo.addProduct(req.body.title);
+commentsRouter.post("/",validateInput, async (req: Request, res: Response) => {
+  let newProduct = await productsRepo.addProduct(req.body.title);
   res.status(201).send(newProduct);
 });
 
-commentsRouter.put("/:id", (req: Request, res: Response) => {
-  let result = productsRepo.updateProduct(+req.params.id, req.body.title);
+commentsRouter.put("/:id",validateInput,async (req: Request, res: Response) => {
+  let result = await productsRepo.updateProduct(+req.params.id, req.body.title);
   res.send(result)
 });

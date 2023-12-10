@@ -3,8 +3,8 @@ import { addressesRepo } from "../repo/addresses-repo";
 
 export const addressesRouter = Router();
 
-addressesRouter.get("/:id", (req: Request, res: Response) => {
-  let idAdress = addressesRepo.getAddressesId(+req.params.id)
+addressesRouter.get("/:id",async (req: Request, res: Response) => {
+  let idAdress = await addressesRepo.getAddressesId(+req.params.id)
   if (!idAdress) {
     res.send(404);
   }
