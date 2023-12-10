@@ -176,3 +176,159 @@ app.put("/products/:id", (req: Request, res: Response) => {
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
+
+//------------------------------------------
+//_____03 - 2 - Swagger_______//
+//Тескт который описывает наш API
+//Генерирует документацию автоматический на основании предложенного кода ( по определенным пояснительным коментарием)
+//Выше расположены сам API с ее запросами а ниже расположены схемы (все объекты отписанные что ждет на выходе или на входе)
+//Также есть разные формат документации по дефолту это документация имеет yaml формате json , есть редакторы которые позволяют в реальном времени изменить доку
+
+//----------------------------------------------
+//_______04 - Express Router_______//
+//маршрутизация
+
+//addresses-routes.ts
+import express, { Request, Response, Router } from "express";
+
+const addresses = [
+  { id: 1, value: "vlad" },
+  { id: 2, value: "nikita" },
+];
+
+export const addressesRouter = Router();
+
+addressesRouter.get("/address/:id", (req: Request, res: Response) => {
+  let idAdress = addresses.find((el) => el.id === +req.params.id);
+  if (!idAdress) {
+    res.send(404);
+  }
+
+  res.send(idAdress);
+});
+
+//index.ts
+app.use("/addresses", addressesRouter);
+
+
+//-------------------------------------------
+//____05 - DataAccessLayer - Repositories__//
+//архетиктура
+//DataAccessLayer - код который общаеться с базой данной
+//presentation layer <- business layer <- data access layer <- data
+
+//addresses-repo.ts
+const addresses = [
+  { id: 1, value: "vlad" },
+  { id: 2, value: "nikita" },
+];
+
+export const addressesRepo = {
+  getAddressesId(id: number) {
+    return addresses.find((el) => el.id === id);
+  }
+}
+
+//addresses-routes.ts
+import express, { Request, Response, Router } from "express";
+import { addressesRepo } from "../repo/addresses-repo";
+
+export const addressesRouter = Router();
+
+addressesRouter.get("/:id", (req: Request, res: Response) => {
+  let idAdress = addressesRepo.getAddressesId(+req.params.id)
+  if (!idAdress) {
+    res.send(404);
+  }
+  res.send(idAdress);
+});
+
+
+//products-repo.ts
+const products = [
+  { id: 1, title: "tomato" },
+  { id: 2, title: "orange" },
+];
+
+export const productsRepo = {
+  getAllProductWithTitle(search: string | null | undefined) {
+    if (search) {
+      return products.filter((el) => el.title?.indexOf(search) > -1);
+    } else {
+      return products
+    }
+  },
+  getProductsId(id: number) {
+    return products.find((el) => el.id === id);
+  },
+  deleteProduct(id: number) {
+    for (let i = 0; i < products.length; i++) {
+      if (products[i].id === id) {
+        products.splice(i, 1);
+        return true
+      } else {
+        return false
+      }
+    }
+  },
+  addProduct(title: string) {
+    let newProduct = {
+      id: +new Date(),
+      title: title,
+    };
+    products.push(newProduct);
+    return newProduct
+  },
+  updateProduct(id: number, title: string) {
+    let product = products.find((el) => el.id === id);
+    if (product) {
+      product.title = title;
+      return product
+    } else {
+      return 404
+    }
+  }
+};
+
+//products-routes.ts
+import express, { Request, Response, Router } from "express";
+import { productsRepo } from "../repo/products-repo";
+
+export const commentsRouter = Router()
+
+commentsRouter.get("/", (req: Request, res: Response) => {
+  let result = productsRepo.getAllProductWithTitle(req.query.title?.toString());
+  res.send(result);
+});
+
+commentsRouter.get("/:id", (req: Request, res: Response) => {
+  let product = productsRepo.getProductsId(+req.params.id);
+  if (!product) {
+    res.send(404);
+  }
+  res.send(product);
+});
+
+
+commentsRouter.delete("/:id", (req: Request, res: Response) => {
+  let result = productsRepo.deleteProduct(+req.params.id);
+  if (result) {
+    return res.sendStatus(204);
+  } else {
+    return res.sendStatus(404);
+  }
+});
+
+commentsRouter.post("/", (req: Request, res: Response) => {
+  let newProduct = productsRepo.addProduct(req.body.title);
+  res.status(201).send(newProduct);
+});
+
+commentsRouter.put("/:id", (req: Request, res: Response) => {
+  let result = productsRepo.updateProduct(+req.params.id, req.body.title);
+  res.send(result)
+});
+
+//------------------------------------------
+//_______
+
