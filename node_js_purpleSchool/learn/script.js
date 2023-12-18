@@ -1000,6 +1000,21 @@ app4.listen(port, () => {
 //--------------------------
 //___Работа с TypeScript__//
 
+//TypeScript - удобства разработки, дополнительные подсказки, интерфейсы,
 
+//npm i -g typescript
+//tsc (компилятор tsc)
+//tsc -- init (конфиг)
+
+/* 
+tsconfig.json
+  ...
+  {
+    "moduleResolution": "node"
+    "outDir": "./dist",
+    "strict": true,
+    ...
+  }
+*/
 
 
