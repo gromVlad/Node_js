@@ -730,4 +730,276 @@ export { saveKeyValue, getKeyValue, TOKEN_DICTIONARY };
 //___Взаимодействие с API___//
 //используем API wether
 
+//api.service.js
+import axios from 'axios';
+import { getKeyValue, TOKEN_DICTIONARY } from './storage.service.js';
+
+const getIcon = (icon) => {
+  switch (icon.slice(0, -1)) {
+    case '01':
+      return '☀️';
+    case '02':
+      return '🌤️';
+    case '03':
+      return '☁️';
+    case '04':
+      return '☁️';
+    case '09':
+      return '🌧️';
+    case '10':
+      return '🌦️';
+    case '11':
+      return '🌩️';
+    case '13':
+      return '❄️';
+    case '50':
+      return '🌫️';
+  }
+};
+
+const getWeather = async (city) => {
+  const token = process.env.TOKEN ?? await getKeyValue(TOKEN_DICTIONARY.token);
+  if (!token) {
+    throw new Error('Не задан ключ API, задайте его через команду -t [API_KEY]');
+  }
+  const { data } = await axios.get('https://api.openweathermap.org/data/2.5/weather', {
+    params: {
+      q: city,
+      appid: token,
+      lang: 'ru',
+      units: 'metric'
+    }
+  });
+  return data;
+};
+
+export { getWeather, getIcon };
+
+//---------------------------------
+//____App___//
+
+//package.json
+/* 
+{
+	"name": "weather-cli-demo",
+	"version": "1.0.0",
+	"description": "CLI for getting weather",
+	"main": "weather.js",
+	"bin": {
+		"weather": "weather.js" - какой файл публиковать под каким именем будет вызваться
+	},
+	"type": "module", - модульный тип
+*/
+
+
+//weather.js
+//#!/usr/bin / env node
+import { getArgs } from './helpers/args.js';
+import { getWeather, getIcon } from './services/api.service.js';
+import { printHelp, printSuccess, printError, printWeather } from './services/log.service.js';
+import { saveKeyValue, TOKEN_DICTIONARY, getKeyValue } from './services/storage.service.js';
+
+const saveToken = async (token) => {
+  if (!token.length) {
+    printError('Не передан token');
+    return;
+  }
+  try {
+    await saveKeyValue(TOKEN_DICTIONARY.token, token);
+    printSuccess('Токен сохранён');
+  } catch (e) {
+    printError(e.message);
+  }
+}
+
+const saveCity = async (city) => {
+  if (!city.length) {
+    printError('Не передан город');
+    return;
+  }
+  try {
+    await saveKeyValue(TOKEN_DICTIONARY.city, city);
+    printSuccess('Город сохранён');
+  } catch (e) {
+    printError(e.message);
+  }
+}
+
+const getForcast = async () => {
+  try {
+    const city = process.env.CITY ?? await getKeyValue(TOKEN_DICTIONARY.city);
+    const weather = await getWeather(city);
+    printWeather(weather, getIcon(weather.weather[0].icon));
+  } catch (e) {
+    if (e?.response?.status == 404) {
+      printError('Неверно указан город');
+    } else if (e?.response?.status == 401) {
+      printError('Неверно указан токен');
+    } else {
+      printError(e.message);
+    }
+  }
+}
+
+const initCLI = () => {
+  const args = getArgs(process.argv);
+  if (args.h) {
+    return printHelp();
+  }
+  if (args.s) {
+    return saveCity(args.s);
+  }
+  if (args.t) {
+    return saveToken(args.t);
+  }
+  return getForcast();
+};
+
+initCLI();
+
+//дальше npm public делаем нашу сборку
+//дальше ставим его глобально на компьютер npm i -d weather-cli-demo
+//далее пользуемся вызываем его npm weather
+
+//когда хотим локально запустить проект передаем ему параметры npm start -- -s moscow
+//с помощью npx можно запустить пакет не устанавливая его npx weather-cli-demo
+//c параметрами npm exec weather-cli-demo -- ...
+
+//-----------------------
+//-----------------------
+//___API с ExpressJS___//
+
+//Простой http сервер
+import http from 'http'
+
+const port = 7000
+const server = http.createServer((req,res) => {
+  switch (req.method) {
+    case "GET":
+        switch (req.url) {
+          case '/hello':
+            res.statusCode = 200
+            res.setHeader("Content-Type",'text/plane')
+            res.end('привет')
+            break;
+        }
+      break;
+  }
+})
+
+server.listen(port,() => {
+  console.log('server on port', + " ", port);
+})
+
+//Переходим на express
+import express from 'express'
+
+const port2 = 8000
+
+const app = express()
+
+app.get('/hello',(req,res) => {
+  res.send('hello')
+})
+
+//можно передовать разны параметры в url hel?lo - > необязательный параметр можно helo / h(el)?lo -> можно hlo / hel+lo - можно helllllo / hell* -> любое после helllksd
+app.get('/hello2',(req,res) => {
+  res.send('post')
+  res.download('txt.pdf')
+  res.header('...')
+})
+
+const cb  = (req,res,next) => {
+  console.log('cb');
+}
+//можно переловать множество обработчиков
+app.get('/hello2', cb, (req,res) => {
+  res.send('post')
+})
+//можно переловать множество обработчиков / также в массиве
+app.get('/hello2', [cb,cb,cb, (req,res) => {
+  res.send('post')
+}])
+
+//Маршрутизация
+app.route('/user')
+  .get('/hello', (req, res) => {
+    res.send('Привет!');
+  })
+  .post('/hello', (req, res) => {
+    res.send('Привет!');
+  });
+
+app.listen(port2, () => {
+  console.log('server on port', + " ", port);
+})
+
+//___Router
+
+//index.js
+import express from 'express';
+import { userRouter } from './users/users.js';
+
+const port3 = 8000;
+const app2 = express();
+
+app2.get('/hello', (req, res) => {
+  res.end();
+});
+
+app2.use('/users', userRouter);
+
+app2.listen(port3, () => {
+  console.log(`Сервер запущен на http://localhost:${port3}`);
+});
+
+//users.js 
+import express from 'express';
+
+const userRouter = express.Router();
+
+userRouter.post('/login', (req, res) => {
+  res.send('login');
+});
+
+userRouter.post('/register', (req, res) => {
+  res.send('register');
+});
+
+export { userRouter };
+
+//__Промежуточные обработчики
+const port4 = 8000;
+const app4 = express();
+
+app4.use((req, res, next) => {
+  console.log('Время ', Date.now());
+  next();
+});
+
+app4.get('/hello', (req, res) => {
+  // res.send('Привет!');
+  res.end();
+  throw new Error('Error!!!');
+});
+
+app4.use('/users', userRouter);
+
+//обработчик глобальный на все приложения
+//обязательно next
+app4.use((err, req, res, next) => {
+  console.log(err.message);
+  res.status(401).send(err.message);
+});
+
+app4.listen(port, () => {
+  console.log(`Сервер запущен на http://localhost:${port}`);
+});
+
+//--------------------------
+//--------------------------
+//___Работа с TypeScript__//
+
+
+
 
