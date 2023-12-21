@@ -296,3 +296,217 @@ function logs(a :string | null):void {
   a?.toUpperCase()
 }
 
+//---------------------------------
+//___App__//
+
+//app.ts
+import express, { Express } from "express";
+import { Server } from "http";
+import { ExeptionFilter } from "./errors/exeption.filter";
+import { LoggerService } from "./logger/logger.service";
+import { UserController } from "./users/users.controller";
+
+export class App {
+  app: Express;
+  server: Server;
+  port: number;
+  logger: LoggerService;
+  userController: UserController;
+  exeptionFilter: ExeptionFilter;
+
+  constructor(
+    logger: LoggerService,
+    userController: UserController,
+    exeptionFilter: ExeptionFilter
+  ) {
+    this.app = express();
+    this.port = 8000;
+    this.logger = logger;
+    this.userController = userController;
+    this.exeptionFilter = exeptionFilter;
+  }
+
+  useRoutes() {
+    this.app.use("/users", this.userController.router);
+  }
+
+  useExeptionFilters() {
+    this.app.use(this.exeptionFilter.catch.bind(this.exeptionFilter));
+  }
+
+  public async init() {
+    this.useRoutes();
+    this.useExeptionFilters();
+    this.server = this.app.listen(this.port);
+    this.logger.log(`Сервер запущен на http://localhost:${this.port}`);
+  }
+}
+
+//logger
+import { Logger } from "tslog";
+
+export class LoggerService {
+  public logger: Logger;
+
+  constructor() {
+    this.logger = new Logger({
+      displayInstanceName: false,
+      displayLoggerName: false,
+      displayFilePath: "hidden",
+      displayFunctionName: false,
+    });
+  }
+
+  log(...args: unknown[]) {
+    this.logger.info(...args);
+  }
+
+  error(...args: unknown[]) {
+    // отправка в sentry / rollbar
+    this.logger.error(...args);
+  }
+
+  warn(...args: unknown[]) {
+    this.logger.warn(...args);
+  }
+}
+
+//route.interface.ts;
+import { NextFunction, Request, Response, Router } from "express";
+
+export interface IControllerRoute {
+  path: string;
+  func: (req: Request, res: Response, next: NextFunction) => void;
+  method: keyof Pick<Router, "get" | "post" | "delete" | "patch" | "put">;
+}
+
+//base.controller.ts
+import { Response, Router } from "express";
+import { LoggerService } from "../logger/logger.service";
+import { IControllerRoute } from "./route.interface";
+export { Router } from "express";
+
+export abstract class BaseController {
+  private readonly _router: Router;
+
+  constructor(private logger: LoggerService) {
+    this._router = Router();
+  }
+
+  get router() {
+    return this._router;
+  }
+
+  public send<T>(res: Response, code: number, message: T) {
+    res.type("application/json");
+    return res.status(code).json(message);
+  }
+
+  public ok<T>(res: Response, message: T) {
+    return this.send<T>(res, 200, message);
+  }
+
+  public created(res: Response) {
+    return res.sendStatus(201);
+  }
+
+  protected bindRoutes(routes: IControllerRoute[]) {
+    for (const route of routes) {
+      this.logger.log(`[${route.method}] ${route.path}`);
+      const handler = route.func.bind(this);
+      this.router[route.method](route.path, handler);
+    }
+  }
+}
+
+//users.controller.ts
+import { NextFunction, Request, Response } from "express";
+import { BaseController } from "../common/base.controller";
+import { HTTPError } from "../errors/http-error.class";
+import { LoggerService } from "../logger/logger.service";
+
+export class UserController extends BaseController {
+  constructor(logger: LoggerService) {
+    super(logger);
+    this.bindRoutes([
+      { path: "/register", method: "post", func: this.register },
+      { path: "/login", method: "post", func: this.login },
+    ]);
+  }
+
+  login(req: Request, res: Response, next: NextFunction) {
+    next(new HTTPError(401, "ошибка авторизации", "login"));
+  }
+
+  register(req: Request, res: Response, next: NextFunction) {
+    this.ok(res, "register");
+  }
+}
+
+//exeption.filter.interface.ts
+import { NextFunction, Request, Response } from "express";
+
+export interface IExeptionFilter {
+  catch: (err: Error, req: Request, res: Response, next: NextFunction) => void;
+}
+
+//http-error.class.ts
+export class HTTPError extends Error {
+  statusCode: number;
+  context?: string;
+
+  constructor(statusCode: number, message: string, context?: string) {
+    super(message);
+    this.statusCode = statusCode;
+    this.message = message;
+    this.context = context;
+  }
+}
+
+//exeption.filter.ts
+import { NextFunction, Request, Response } from "express";
+import { LoggerService } from "../logger/logger.service";
+import { IExeptionFilter } from "./exeption.filter.interface";
+import { HTTPError } from "./http-error.class";
+
+export class ExeptionFilter implements IExeptionFilter {
+  logger: LoggerService;
+  constructor(logger: LoggerService) {
+    this.logger = logger;
+  }
+  catch(
+    err: Error | HTTPError,
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    if (err instanceof HTTPError) {
+      this.logger.error(
+        `[${err.context}] Ошибка ${err.statusCode}: ${err.message}`
+      );
+      res.status(err.statusCode).send({ err: err.message });
+    } else {
+      this.logger.error(`${err.message}`);
+      res.status(500).send({ err: err.message });
+    }
+  }
+}
+
+//main.ts
+import { App } from "./app";
+import { ExeptionFilter } from "./errors/exeption.filter";
+import { LoggerService } from "./logger/logger.service";
+import { UserController } from "./users/users.controller";
+
+async function bootstrap() {
+  const logger = new LoggerService();
+  const app = new App(
+    logger,
+    new UserController(logger),
+    new ExeptionFilter(logger)
+  );
+  await app.init();
+}
+
+bootstrap();
+
