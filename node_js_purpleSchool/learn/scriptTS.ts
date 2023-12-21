@@ -510,3 +510,164 @@ async function bootstrap() {
 
 bootstrap();
 
+//--------------------------
+//__Dependency Injection__//
+
+//__Разбор DI и IOC
+//в аpp будем использовать не конкретный логер а просто описание интерфейса нужного тоесть подходящая реализация
+
+import { Logger } from "tslog";
+
+export interface ILogger {
+  logger: unknown;
+  log: (...args: unknown[]) => void;
+  error: (...args: unknown[]) => void;
+  warn: (...args: unknown[]) => void;
+}
+
+//__Декораторы
+//разрешение использование декораторов поменять разрешение на true в конфиге
+
+//Декоратор класса
+function myClassDecorator<T extends { new (...args: any[]): {} }>(constructor: T) {
+  return class extends constructor {
+    newProperty = "Это новое свойство";
+    newMethod() {
+      console.log("Это новый метод");
+    }
+  };
+}
+
+@myClassDecorator
+class MyClass {
+  constructor(public name: string) {}
+}
+
+const obj = new MyClass("Объект");
+console.log(obj.name); // Вывод: Объект
+console.log(obj.newProperty); // Вывод: Это новое свойство
+obj.newMethod(); // Вывод: Это новый метод
+
+//Декоратор метода:
+function myMethodDecorator(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  const originalMethod = descriptor.value;
+  descriptor.value = function (...args: any[]) {
+    console.log("До выполнения метода");
+    const result = originalMethod.apply(this, args);
+    console.log("После выполнения метода");
+    return result;
+  };
+  return descriptor;
+}
+
+class MyClass {
+  @myMethodDecorator
+  myMethod() {
+    console.log("Это мой метод");
+  }
+}
+
+const obj = new MyClass();
+obj.myMethod();
+// Вывод:
+// До выполнения метода
+// Это мой метод
+// После выполнения метод
+
+//Декоратор параметра
+function myParameterDecorator(target: any, propertyKey: string | symbol, parameterIndex: number) {
+  console.log(`Декорирование параметра ${propertyKey} с индексом ${parameterIndex}`);
+}
+
+class MyClass {
+  myMethod(@myParameterDecorator param: string) {
+    console.log(`Значение параметра: ${param}`);
+  }
+}
+
+const obj = new MyClass();
+obj.myMethod("Значение параметра");
+// Вывод:
+// Декорирование параметра myMethod с индексом 0
+// Значение параметра: Значение параметра
+
+//Декоратор свойства
+function myPropertyDecorator(target: any, propertyKey: string) {
+  let value = target[propertyKey];
+  const getter = function () {
+    console.log(`Чтение свойства ${propertyKey}`);
+    return value;
+  };
+  const setter = function (newValue: any) {
+    console.log(`Установка свойства ${propertyKey} со значением ${newValue}`);
+    value = newValue;
+  };
+  Object.defineProperty(target, propertyKey, {
+    get: getter,
+    set: setter,
+    enumerable: true,
+    configurable: true,
+  });
+}
+
+class MyClass {
+  @myPropertyDecorator
+  myProperty: string = "Значение свойства";
+}
+
+const obj = new MyClass();
+console.log(obj.myProperty); // Вывод: Чтение свойства myProperty, Значение свойства
+obj.myProperty = "Новое значение";
+console.log(obj.myProperty); // Вывод: Чтение свойства myProperty, Новое значение
+
+//__Metadata Reflection
+//Метаданные представляют собой дополнительную информацию о классах, методах, свойствах и других элементах программы
+@Reflect.metadata("customKey", "Custom Value")
+class MyClass {}
+
+const metadata = Reflect.getMetadata("customKey", MyClass);
+console.log(metadata); // Вывод: Custom Value
+
+//__Внедряем InversifyJS
+//сохроняем все в контейнер а потом просто берем и использем его
+//дальше можно обращаться с любого места в приложении к ним
+
+//types.ts
+export const TYPES = {
+  Application: Symbol.for("Application"),
+  ILogger: Symbol.for("ILogger"),
+  UserController: Symbol.for("UserController"),
+  ExeptionFilter: Symbol.for("ExeptionFilter"),
+};
+
+//main.ts
+import { Container } from "inversify";
+
+const appContainer = new Container();
+appContainer.bind<ILogger>(TYPES.ILogger).to(LoggerService);
+appContainer.bind<IExeptionFilter>(TYPES.ExeptionFilter).to(ExeptionFilter);
+appContainer.bind<UserController>(TYPES.UserController).to(UserController);
+appContainer.bind<App>(TYPES.Application).to(App);
+const app = appContainer.get<App>(TYPES.Application);
+app.init();
+
+//подключаем их
+//logger.service.ts
+import { injectable } from 'inversify';
+
+@injectable()
+export class LoggerService implements ILogger {
+	public logger: Logger;
+}
+
+//users.controller.ts
+@injectable()
+export class UserController extends BaseController {
+	constructor(
+		//logger: LoggerService
+    //если бередаем что то в конструкторе то можем брать с контейнера
+		@inject(TYPES.ILogger) private loggerService: ILogger
+	) {
+		super(logger);
+  }
+}
