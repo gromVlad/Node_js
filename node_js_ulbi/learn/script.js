@@ -211,67 +211,68 @@ writeFile(path.resolve(__dirname, "text.txt"), text)
   .then(() => readFile(path.resolve(__dirname, "text.txt")))
   .then((data) => data.split(" ".length))
   .then((count) => writeFile(path.resolve(__dirname, "text.txt"), count))
-  .then(() => deleteFile(path.resolve(__dirname, "text.txt")))
+  .then(() => deleteFile(path.resolve(__dirname, "text.txt")));
 //сross-env TEXT = "1 2 3 4 5" node ./les/file-system.js -> 5
 
 //-------------------------
-//_Модуль cluster 
+//_Модуль cluster
 //взаимодействие с операционной системой
 const os = require("os");
-const cluster = require("cluster");//однопоточному приложению использовать все возможности многоядерных ситсем 
+const cluster = require("cluster"); //однопоточному приложению использовать все возможности многоядерных ситсем
 
-os.platform() // текущею операционную систему
-os.arch() //архитектура процессора
-os.cpus().length //описание ядра процессора / количество ядер
+os.platform(); // текущею операционную систему
+os.arch(); //архитектура процессора
+os.cpus().length; //описание ядра процессора / количество ядер
 
 for (let index = 0; index < os.cpus().length - 2; index++) {
-  os.cpus()[i]
+  os.cpus()[i];
 }
 
-const cpus = os.cpus()
+const cpus = os.cpus();
 //isMaster -являеться ли процесс главным
-if (cluster.isMaster){
+if (cluster.isMaster) {
   //для каждого ядра будет запускать процесс
   for (let index = 0; index < cpus.length - 2; index++) {
-    cluster.fork()
-  } 
+    cluster.fork();
+  }
   //события
-  cluster.on('exit',(w) => {
-    console.log(w.process.pid, ' умер');
+  cluster.on("exit", (w) => {
+    console.log(w.process.pid, " умер");
     //дальше запускаем еще процесс чтобы всегда работало максимально возможное число процессов
-  })
+  });
 } else {
   //process.pid - id процесса
-  console.log(process.pid,'еще работает');
+  console.log(process.pid, "еще работает");
 }
 
 //------------------------
 //__Модуль события events
 const Emmiter = require("events");
+const { Stream } = require("stream");
 
-const emitter = new Emmiter()
+const emitter = new Emmiter();
 
-emitter.on('message', (data1, data2) => {
+emitter.on("message", (data1, data2) => {
   console.log(data1, data2);
-})
-const callOne = emitter.on('message2',(data1,data2) => {
-  console.log(data1,data2);
-})
+});
+const callOne = emitter.on("message2", (data1, data2) => {
+  console.log(data1, data2);
+});
 
-const MESSAGE = process.env.message || ""
+const MESSAGE = process.env.message || "";
 
-if (MESSAGE){
-  emitter.emit('message','hello ', 'world')
+if (MESSAGE) {
+  emitter.emit("message", "hello ", "world");
 }
 
 //когда использовать - http / websockets / long puling / clusters
 
 //лишь единожды
-emitter.once('message2', callOne)
+emitter.once("message2", callOne);
 
 //удалять обработчики
-emitter.removeAllListeners()
-emitter.removeListener('message2', callOne)
+emitter.removeAllListeners();
+emitter.removeListener("message2", callOne);
 
 //---------------------------
 //__Стримы (потоки)
@@ -281,4 +282,78 @@ emitter.removeListener('message2', callOne)
 //Duplex - для чтения и записи Readable + Writable
 //tranform - токой же как Duplex, но может зменять данные по мере чтения
 
+//!для чтения и запись данных по кусочкам
+
+//получили сразу большой объем данных
+fs.readFile(
+  path.resolve(__dirname, "test.txt", (err, data) => {
+    if (err) {
+      console.log(err);
+    }
+    console.log(data);
+  })
+);
+
+//стримы работают по событию / также есть опции
+const stream = fs.createReadStream(path.resolve(__dirname), "test.txt");
+
+//получили по частям
+stream.on("data", (chunk) => {
+  console.log(chunk);
+});
+
+//обработка ошибок
+stream.on("error", (e) => {
+  console.log(e);
+});
+
+//запись файла
+const writableStream = fs.createWriteStream(
+  path.resolve(__dirname),
+  "test.txt"
+);
+
+for (let i = 0; i < 30; i++) {
+  writableStream.write(i);
+}
+writableStream.end();
+writableStream.destroy();
+writableStream.close();
+
+//req и res в http также являються стримами
+const http = require("http");
+
+http.createServer((req, res) => {
+  //req - Redable
+  //res - Writable
+
+  const stream = fs.createReadStream(path.resolve(__dirname), "test.txt");
+
+  //сетевое подлючения медлее чем чтения файла и возникнет ситуация что файл прочитали но все данные не выкачели
+  stream.on("data", (chunk) => res.write(chunk));
+  stream.on("end", (chunk) => res.end());
+
+  //достигаем синхронизации между Redable и Writable стримами
+  stream.pipe(res);
+});
+
+//----------------------------
+//__Модуль http
+
+const PORT = process.env.PORT || 5000;
+
+const server = http.createServer((req, res) => {
+  res.writeHead(200, {});
+
+  if (req.url === "/posts") {
+    return res.end("POSTS");
+  }
+});
+server.listen(PORT, () => console.log("hello"));
+
+//устанавливаем nodemon на каждый изменения будет автостаротовать наше приложения заново и не надо будет делать это вручную
+//nodemon index.js
+
+//-----------------------------
+//__Создание своего фреймоврка
 
